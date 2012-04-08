@@ -4,3 +4,5 @@ make
 darkText = 0 - если белый текст на черном
 	   1 - черный текст на белом
 
+//источник - https://sites.google.com/site/roboticssaurav/strokewidthnokia
+

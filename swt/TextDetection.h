@@ -1,3 +1,5 @@
+//источник - https://sites.google.com/site/roboticssaurav/strokewidthnokia
+
 #ifndef TEXTDETECTION_H
 #define TEXTDETECTION_H
 

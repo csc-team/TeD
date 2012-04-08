@@ -1,3 +1,5 @@
+//источник - https://sites.google.com/site/roboticssaurav/strokewidthnokia
+
 #include <fstream>
 #include "TextDetection.h"
 #include "opencv2/imgproc/imgproc.hpp"
