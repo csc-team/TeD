@@ -18,6 +18,7 @@
 #include <utility>
 #include <algorithm>
 #include <vector>
+#include <limits.h>
 #include <sys/time.h>
 #include "TextDetection.h"
 
@@ -45,6 +46,7 @@ int getComp(IplImage *in, CvRect** regions) {
         regions[num]->y = it->first.y;
         regions[num]->width = it->second.x - it->first.x;
         regions[num]->height = it->second.y - it->first.y;
+	//std::cout << "x " << regions[num]->x << " y " << regions[num]->y << std::endl;
         num++;
     }
 
@@ -55,6 +57,7 @@ int getComp(IplImage *in, CvRect** regions) {
         regions[num]->y = it->first.y;
         regions[num]->width = it->second.x - it->first.x;
         regions[num]->height = it->second.y - it->first.y;
+	//std::cout << "x " << regions[num]->x << " y " << regions[num]->y << std::endl;
         num++;
     }
 
@@ -63,17 +66,29 @@ int getComp(IplImage *in, CvRect** regions) {
             cvCreateImage ( cvGetSize ( in ), 8U, 3 );
     cvCopy( in, out, NULL );
 
-    for (int i = 0; i < num; i++) {
-        CvScalar c = cvScalar(0, 0, 250);
+    for (int i = 0; i < darkCompBB.size(); i++) {
+        CvScalar c = cvScalar(0, 0, i);
         cvRectangle(out,cvPoint(regions[i]->x, regions[i]->y), cvPoint(regions[i]->x + regions[i]->width, regions[i]->y + regions[i]->height ), c, 2);
 
     }
+    for (int i = darkCompBB.size(); i < num; i++) {
+        CvScalar c = cvScalar(0, i - darkCompBB.size(), 0);
+        cvRectangle(out,cvPoint(regions[i]->x, regions[i]->y), cvPoint(regions[i]->x + regions[i]->width, regions[i]->y + regions[i]->height ), c, 2);
+
+    }
+
+    CvRect* r = getRegion(regions, num);
+
+    CvScalar c = cvScalar(255, 0, 0);
+    cvRectangle(out,cvPoint(r->x, r->y), cvPoint(r->x + r->width, r->y + r->height ), c, 2);
+
     cvSaveImage("canny11.jpg", out);*/
    
     return num;
 	
 }
 int getFastComp(IplImage *in, CvRect** regions) {
+
     std::vector<std::pair<Point2d,Point2d> > darkCompBB;
     std::vector<std::pair<Point2d,Point2d> > lightCompBB;
 
@@ -121,8 +136,26 @@ int getFastComp(IplImage *in, CvRect** regions) {
     return num;
 }
 
-CvRect getRegion(CvRect* in, int len, CvRect** out ) {
-	return *out[0];
+CvRect* getRegion(CvRect** out, int len) {
+    
+    int maxx = 0;
+    int maxy = 0;
+    int minx = INT_MAX;
+    int miny = INT_MAX;
+
+    for (int i = 0; i < len; i++ ) {
+
+        if (out[i]->x < minx) minx = out[i]->x;
+        if (out[i]->y < miny) miny = out[i]->y;
+        if (out[i]->x + out[i]->width > maxx) maxx = out[i]->x + out[i]->width;
+        if (out[i]->y + out[i]->height > maxy) maxy = out[i]->y + out[i]->height;
+    }
+    CvRect* r = new CvRect();
+    r->x = minx;
+    r->y = miny;
+    r->width = maxx - minx;
+    r->height = maxy - miny;
+    return r;
 }
 
 

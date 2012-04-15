@@ -55,7 +55,7 @@ void SWTMedianFilter (IplImage * SWTImage,
                      std::vector<Ray> & rays);
 int getComp(IplImage *in, CvRect** regions);
 int getFastComp(IplImage *in, CvRect** regions);
-CvRect getRegion(CvRect* in, int len, CvRect** out );
+CvRect* getRegion(CvRect** out, int len);
 
 
 std::vector< std::vector<Point2d> >
