@@ -27,122 +27,98 @@
 int getComp(IplImage *in, CvRect** regions) {
 
     std::vector<std::pair<Point2d,Point2d> > darkCompBB;
-    std::vector<std::vector<Point2d> > darkComp;
-
     std::vector<std::pair<Point2d,Point2d> > lightCompBB;
-    std::vector<std::vector<Point2d> > lightComp;
+
+    getComponents(in, darkCompBB, 1);
+    getComponents(in, lightCompBB,  0);
 
 
-    std::cout << "getComponents1" << std::endl;
-    getComponents(in, darkCompBB, darkComp, 1);
-    std::cout << "getComponents2 " << darkCompBB.size() << std::endl;
-    getComponents(in, lightCompBB, lightComp, 0);
-    std::cout << "getComponents completed " << lightCompBB.size() << std::endl;
-
-
-    regions = new CvRect*[darkCompBB.size() + lightComp.size()];
+    regions = new CvRect*[darkCompBB.size() + lightCompBB.size()];
 
     int num = 0;
 
 
     for (std::vector<std::pair<Point2d,Point2d> >::iterator it=darkCompBB.begin(); it != darkCompBB.end(); it++ ) {
- 	CvRect r = cvRect( it->first.x, it->first.y, (it->second.x - it->first.x), (it->second.y - it->first.y) );
-        regions[num] = &r;//new CvRect(1,1,1,1);// it->first.x, it->first.y, (it->second.x - it->first.x), (it->second.y - it->first.y) );
+
+        regions[num] = new CvRect();
+        regions[num]->x = it->first.x;
+        regions[num]->y = it->first.y;
+        regions[num]->width = it->second.x - it->first.x;
+        regions[num]->height = it->second.y - it->first.y;
         num++;
     }
 
     for (std::vector<std::pair<Point2d,Point2d> >::iterator it=lightCompBB.begin(); it != lightCompBB.end(); it++ ) {
-	CvRect r = cvRect( it->first.x, it->first.y, (it->second.x - it->first.x), (it->second.y - it->first.y) );
-        regions[num] = &r;
+
+        regions[num] = new CvRect();
+        regions[num]->x = it->first.x;
+        regions[num]->y = it->first.y;
+        regions[num]->width = it->second.x - it->first.x;
+        regions[num]->height = it->second.y - it->first.y;
         num++;
     }
 
- 
+/*
     IplImage * out =
             cvCreateImage ( cvGetSize ( in ), 8U, 3 );
     cvCopy( in, out, NULL );
 
-    std::vector<std::pair<CvPoint,CvPoint> > bb;
-    bb.reserve(lightCompBB.size());
-    for (std::vector<std::pair<Point2d,Point2d> >::iterator it=lightCompBB.begin(); it != lightCompBB.end(); it++ ) {
-        CvPoint p0 = cvPoint(it->first.x,it->first.y);
-        CvPoint p1 = cvPoint(it->second.x,it->second.y);
-        std::pair<CvPoint,CvPoint> pair(p0,p1);
-        bb.push_back(pair);
-    }
-/*
     for (int i = 0; i < num; i++) {
-        CvScalar c = cvScalar(0, 0, 0);
+        CvScalar c = cvScalar(0, 0, 250);
         cvRectangle(out,cvPoint(regions[i]->x, regions[i]->y), cvPoint(regions[i]->x + regions[i]->width, regions[i]->y + regions[i]->height ), c, 2);
-    }*/
 
-    for (std::vector<std::pair<CvPoint,CvPoint> >::iterator it= bb.begin(); it != bb.end(); it++) {
-        CvScalar c=cvScalar(0,0,250);
-        cvRectangle(out,it->first,it->second,c,2);
     }
-    cvSaveImage("canny11.jpg", out);
+    cvSaveImage("canny11.jpg", out);*/
    
     return num;
 	
 }
 int getFastComp(IplImage *in, CvRect** regions) {
     std::vector<std::pair<Point2d,Point2d> > darkCompBB;
-    std::vector<std::vector<Point2d> > darkComp;
-
     std::vector<std::pair<Point2d,Point2d> > lightCompBB;
-    std::vector<std::vector<Point2d> > lightComp;
 
-    std::cout << "getComponents1" << std::endl;
-    getComponents(in, darkCompBB, darkComp, 1);
-    std::cout << "getComponents2 " << darkCompBB.size() << std::endl;
-    getComponents(in, lightCompBB, lightComp, 0);
-    std::cout << "getComponents completed " << lightCompBB.size() << std::endl;
+    getComponents(in, darkCompBB, 1);
+    getComponents(in, lightCompBB,  0);
 
 
-    regions = new CvRect*[darkCompBB.size() + lightComp.size()];
+    regions = new CvRect*[darkCompBB.size() + lightCompBB.size()];
 
     int num = 0;
 
 
     for (std::vector<std::pair<Point2d,Point2d> >::iterator it=darkCompBB.begin(); it != darkCompBB.end(); it++ ) {
- 	CvRect r = cvRect( it->first.x, it->first.y, (it->second.x - it->first.x), (it->second.y - it->first.y) );
-        regions[num] = &r;//new CvRect(1,1,1,1);// it->first.x, it->first.y, (it->second.x - it->first.x), (it->second.y - it->first.y) );
+
+        regions[num] = new CvRect();
+        regions[num]->x = it->first.x;
+        regions[num]->y = it->first.y;
+        regions[num]->width = it->second.x - it->first.x;
+        regions[num]->height = it->second.y - it->first.y;
         num++;
     }
 
     for (std::vector<std::pair<Point2d,Point2d> >::iterator it=lightCompBB.begin(); it != lightCompBB.end(); it++ ) {
-	CvRect r = cvRect( it->first.x, it->first.y, (it->second.x - it->first.x), (it->second.y - it->first.y) );
-        regions[num] = &r;
+
+        regions[num] = new CvRect();
+        regions[num]->x = it->first.x;
+        regions[num]->y = it->first.y;
+        regions[num]->width = it->second.x - it->first.x;
+        regions[num]->height = it->second.y - it->first.y;
         num++;
     }
 
- 
+/*
     IplImage * out =
             cvCreateImage ( cvGetSize ( in ), 8U, 3 );
     cvCopy( in, out, NULL );
 
-    std::vector<std::pair<CvPoint,CvPoint> > bb;
-    bb.reserve(lightCompBB.size());
-    for (std::vector<std::pair<Point2d,Point2d> >::iterator it=lightCompBB.begin(); it != lightCompBB.end(); it++ ) {
-        CvPoint p0 = cvPoint(it->first.x,it->first.y);
-        CvPoint p1 = cvPoint(it->second.x,it->second.y);
-        std::pair<CvPoint,CvPoint> pair(p0,p1);
-        bb.push_back(pair);
-    }
-/*
     for (int i = 0; i < num; i++) {
-        CvScalar c = cvScalar(0, 0, 0);
+        CvScalar c = cvScalar(0, 0, 250);
         cvRectangle(out,cvPoint(regions[i]->x, regions[i]->y), cvPoint(regions[i]->x + regions[i]->width, regions[i]->y + regions[i]->height ), c, 2);
-    }*/
 
-    for (std::vector<std::pair<CvPoint,CvPoint> >::iterator it= bb.begin(); it != bb.end(); it++) {
-        CvScalar c=cvScalar(0,0,255);
-        cvRectangle(out,it->first,it->second,c,2);
     }
-    cvSaveImage("canny11.jpg", out);
+    cvSaveImage("canny11.jpg", out);*/
    
     return num;
-	
 }
 
 CvRect getRegion(CvRect* in, int len, CvRect** out ) {
@@ -387,17 +363,15 @@ void renderChains (IplImage * SWTImage,
 }
 
 void getComponents(	IplImage* input, 
-			std::vector<std::pair<Point2d,Point2d> > compBB, 
-			std::vector<std::vector<Point2d> > validComponents, 
+			std::vector<std::pair<Point2d,Point2d> > & compBB, 
 			bool dark_on_light)
 {
     assert ( input->depth == IPL_DEPTH_8U );
     assert ( input->nChannels == 3 );
-	printf("textDetection time1\n");
+
     IplImage * grayImage =
             cvCreateImage( cvGetSize ( input ), IPL_DEPTH_8U, 1 );
     cvCvtColor ( input, grayImage, CV_RGB2GRAY );
-	printf("textDetection time1\n");
 
     double threshold_low = 175;
     double threshold_high = 320;
@@ -415,7 +389,6 @@ void getComponents(	IplImage* input,
 
     IplImage * gradientY =
             cvCreateImage ( cvGetSize ( input ), IPL_DEPTH_32F, 1 );
-	printf("textDetection time2\n");
  
     cvSobel(gaussianImage, gradientX , 1, 0, CV_SCHARR);
     cvSobel(gaussianImage, gradientY , 0, 1, CV_SCHARR);
@@ -423,7 +396,6 @@ void getComponents(	IplImage* input,
     cvSmooth(gradientY, gradientY, 3, 3);
     cvReleaseImage ( &gaussianImage );
     cvReleaseImage ( &grayImage );
-	printf("textDetection time3\n");
 
     std::vector<Ray> rays;
     IplImage * SWTImage =
@@ -436,7 +408,6 @@ void getComponents(	IplImage* input,
     }
     strokeWidthTransform ( edgeImage, gradientX, gradientY, dark_on_light, SWTImage, rays );
     SWTMedianFilter ( SWTImage, rays );
-	printf("textDetection time4\n");
 
     IplImage * output2 =
             cvCreateImage ( cvGetSize ( input ), IPL_DEPTH_32F, 1 );
@@ -446,19 +417,17 @@ void getComponents(	IplImage* input,
     cvConvertScale(output2, saveSWT, 255, 0);
     cvReleaseImage ( &output2 );
     cvReleaseImage( &saveSWT );
-	printf("textDetection time5\n");
 
     std::vector<std::vector<Point2d> > components = findLegallyConnectedComponents(SWTImage, rays);
-    printf("textDetection time6\n");
 
 
     // Filter the components
+    std::vector<std::vector<Point2d> > validComponents;
     std::vector<Point2dFloat> compCenters;
     std::vector<float> compMedians;
     std::vector<Point2d> compDimensions;
     filterComponents(SWTImage, components, validComponents, compCenters, compMedians, compDimensions, compBB );
 
-    std::cout << "!!!getComponents2 " <<compBB.size() << std::endl;
     cvReleaseImage ( &gradientX );
     cvReleaseImage ( &gradientY );
     cvReleaseImage ( &SWTImage );

@@ -71,8 +71,7 @@ void componentStats(IplImage * SWTImage,
                                         float & mean, float & variance, float & median,
                                         int & minx, int & miny, int & maxx, int & maxy);
 void getComponents(	IplImage* input, 
-			std::vector<std::pair<Point2d,Point2d> > compBB, 
-			std::vector<std::vector<Point2d> > validComponents, 
+			std::vector<std::pair<Point2d,Point2d> > & compBB, 
 			bool dark_on_light);
 
 void filterComponents(IplImage * SWTImage,
