@@ -1,5 +1,4 @@
 //источник - https://sites.google.com/site/roboticssaurav/strokewidthnokia
-
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/graph_traits.hpp>
 #include <boost/graph/connected_components.hpp>
@@ -11,17 +10,145 @@
 #include <cassert>
 #include <cmath>
 #include <iostream>
-#include <opencv/cv.h>
-#include <opencv/highgui.h>
-#include <opencv/cxcore.h>
+#include "opencv2/imgproc/imgproc.hpp"
+#include "opencv2/highgui/highgui.hpp"
+#include "opencv2/core/core.hpp"
 #include <math.h>
 #include <time.h>
 #include <utility>
 #include <algorithm>
 #include <vector>
+#include <sys/time.h>
 #include "TextDetection.h"
 
+
 #define PI 3.14159265
+
+int getComp(IplImage *in, CvRect** regions) {
+
+    std::vector<std::pair<Point2d,Point2d> > darkCompBB;
+    std::vector<std::vector<Point2d> > darkComp;
+
+    std::vector<std::pair<Point2d,Point2d> > lightCompBB;
+    std::vector<std::vector<Point2d> > lightComp;
+
+
+    std::cout << "getComponents1" << std::endl;
+    getComponents(in, darkCompBB, darkComp, 1);
+    std::cout << "getComponents2 " << darkCompBB.size() << std::endl;
+    getComponents(in, lightCompBB, lightComp, 0);
+    std::cout << "getComponents completed " << lightCompBB.size() << std::endl;
+
+
+    regions = new CvRect*[darkCompBB.size() + lightComp.size()];
+
+    int num = 0;
+
+
+    for (std::vector<std::pair<Point2d,Point2d> >::iterator it=darkCompBB.begin(); it != darkCompBB.end(); it++ ) {
+ 	CvRect r = cvRect( it->first.x, it->first.y, (it->second.x - it->first.x), (it->second.y - it->first.y) );
+        regions[num] = &r;//new CvRect(1,1,1,1);// it->first.x, it->first.y, (it->second.x - it->first.x), (it->second.y - it->first.y) );
+        num++;
+    }
+
+    for (std::vector<std::pair<Point2d,Point2d> >::iterator it=lightCompBB.begin(); it != lightCompBB.end(); it++ ) {
+	CvRect r = cvRect( it->first.x, it->first.y, (it->second.x - it->first.x), (it->second.y - it->first.y) );
+        regions[num] = &r;
+        num++;
+    }
+
+ 
+    IplImage * out =
+            cvCreateImage ( cvGetSize ( in ), 8U, 3 );
+    cvCopy( in, out, NULL );
+
+    std::vector<std::pair<CvPoint,CvPoint> > bb;
+    bb.reserve(lightCompBB.size());
+    for (std::vector<std::pair<Point2d,Point2d> >::iterator it=lightCompBB.begin(); it != lightCompBB.end(); it++ ) {
+        CvPoint p0 = cvPoint(it->first.x,it->first.y);
+        CvPoint p1 = cvPoint(it->second.x,it->second.y);
+        std::pair<CvPoint,CvPoint> pair(p0,p1);
+        bb.push_back(pair);
+    }
+/*
+    for (int i = 0; i < num; i++) {
+        CvScalar c = cvScalar(0, 0, 0);
+        cvRectangle(out,cvPoint(regions[i]->x, regions[i]->y), cvPoint(regions[i]->x + regions[i]->width, regions[i]->y + regions[i]->height ), c, 2);
+    }*/
+
+    for (std::vector<std::pair<CvPoint,CvPoint> >::iterator it= bb.begin(); it != bb.end(); it++) {
+        CvScalar c=cvScalar(0,0,250);
+        cvRectangle(out,it->first,it->second,c,2);
+    }
+    cvSaveImage("canny11.jpg", out);
+   
+    return num;
+	
+}
+int getFastComp(IplImage *in, CvRect** regions) {
+    std::vector<std::pair<Point2d,Point2d> > darkCompBB;
+    std::vector<std::vector<Point2d> > darkComp;
+
+    std::vector<std::pair<Point2d,Point2d> > lightCompBB;
+    std::vector<std::vector<Point2d> > lightComp;
+
+    std::cout << "getComponents1" << std::endl;
+    getComponents(in, darkCompBB, darkComp, 1);
+    std::cout << "getComponents2 " << darkCompBB.size() << std::endl;
+    getComponents(in, lightCompBB, lightComp, 0);
+    std::cout << "getComponents completed " << lightCompBB.size() << std::endl;
+
+
+    regions = new CvRect*[darkCompBB.size() + lightComp.size()];
+
+    int num = 0;
+
+
+    for (std::vector<std::pair<Point2d,Point2d> >::iterator it=darkCompBB.begin(); it != darkCompBB.end(); it++ ) {
+ 	CvRect r = cvRect( it->first.x, it->first.y, (it->second.x - it->first.x), (it->second.y - it->first.y) );
+        regions[num] = &r;//new CvRect(1,1,1,1);// it->first.x, it->first.y, (it->second.x - it->first.x), (it->second.y - it->first.y) );
+        num++;
+    }
+
+    for (std::vector<std::pair<Point2d,Point2d> >::iterator it=lightCompBB.begin(); it != lightCompBB.end(); it++ ) {
+	CvRect r = cvRect( it->first.x, it->first.y, (it->second.x - it->first.x), (it->second.y - it->first.y) );
+        regions[num] = &r;
+        num++;
+    }
+
+ 
+    IplImage * out =
+            cvCreateImage ( cvGetSize ( in ), 8U, 3 );
+    cvCopy( in, out, NULL );
+
+    std::vector<std::pair<CvPoint,CvPoint> > bb;
+    bb.reserve(lightCompBB.size());
+    for (std::vector<std::pair<Point2d,Point2d> >::iterator it=lightCompBB.begin(); it != lightCompBB.end(); it++ ) {
+        CvPoint p0 = cvPoint(it->first.x,it->first.y);
+        CvPoint p1 = cvPoint(it->second.x,it->second.y);
+        std::pair<CvPoint,CvPoint> pair(p0,p1);
+        bb.push_back(pair);
+    }
+/*
+    for (int i = 0; i < num; i++) {
+        CvScalar c = cvScalar(0, 0, 0);
+        cvRectangle(out,cvPoint(regions[i]->x, regions[i]->y), cvPoint(regions[i]->x + regions[i]->width, regions[i]->y + regions[i]->height ), c, 2);
+    }*/
+
+    for (std::vector<std::pair<CvPoint,CvPoint> >::iterator it= bb.begin(); it != bb.end(); it++) {
+        CvScalar c=cvScalar(0,0,255);
+        cvRectangle(out,it->first,it->second,c,2);
+    }
+    cvSaveImage("canny11.jpg", out);
+   
+    return num;
+	
+}
+
+CvRect getRegion(CvRect* in, int len, CvRect** out ) {
+	return *out[0];
+}
+
 
 std::vector<std::pair<CvPoint,CvPoint> > findBoundingBoxes( std::vector<std::vector<Point2d> > & components,
                                                            std::vector<Chain> & chains,
@@ -207,7 +334,7 @@ void renderChainsWithBoxes (IplImage * SWTImage,
     IplImage * outTemp =
             cvCreateImage ( cvGetSize ( output ), IPL_DEPTH_32F, 1 );
 
-    std::cout << componentsRed.size() << " components after chaining" << std::endl;
+    //std::cout << componentsRed.size() << " components after chaining" << std::endl;
     renderComponents(SWTImage,componentsRed,outTemp);
     std::vector<std::pair<CvPoint,CvPoint> > bb;
     bb = findBoundingBoxes(components, chains, compBB, outTemp);
@@ -251,7 +378,7 @@ void renderChains (IplImage * SWTImage,
             componentsRed.push_back(components[i]);
         }
     }
-    std::cout << componentsRed.size() << " components after chaining" << std::endl;
+    //std::cout << componentsRed.size() << " components after chaining" << std::endl;
     IplImage * outTemp =
             cvCreateImage ( cvGetSize ( output ), IPL_DEPTH_32F, 1 );
     renderComponents(SWTImage,componentsRed,outTemp);
@@ -259,57 +386,136 @@ void renderChains (IplImage * SWTImage,
 
 }
 
-IplImage * textDetection (IplImage* input, bool dark_on_light)
+void getComponents(	IplImage* input, 
+			std::vector<std::pair<Point2d,Point2d> > compBB, 
+			std::vector<std::vector<Point2d> > validComponents, 
+			bool dark_on_light)
 {
     assert ( input->depth == IPL_DEPTH_8U );
     assert ( input->nChannels == 3 );
-    std::cout << "Running textDetection with dark_on_light " << dark_on_light << std::endl;
+	printf("textDetection time1\n");
+    IplImage * grayImage =
+            cvCreateImage( cvGetSize ( input ), IPL_DEPTH_8U, 1 );
+    cvCvtColor ( input, grayImage, CV_RGB2GRAY );
+	printf("textDetection time1\n");
+
+    double threshold_low = 175;
+    double threshold_high = 320;
+    IplImage * edgeImage =
+            cvCreateImage( cvGetSize (input),IPL_DEPTH_8U, 1 );
+    cvCanny(grayImage, edgeImage, threshold_low, threshold_high, 3) ;
+
+    IplImage * gaussianImage =
+            cvCreateImage ( cvGetSize(input), IPL_DEPTH_32F, 1);
+    cvConvertScale (grayImage, gaussianImage, 1./255., 0);
+    cvSmooth( gaussianImage, gaussianImage, CV_GAUSSIAN, 5, 5);
+
+    IplImage * gradientX =
+            cvCreateImage ( cvGetSize ( input ), IPL_DEPTH_32F, 1 );
+
+    IplImage * gradientY =
+            cvCreateImage ( cvGetSize ( input ), IPL_DEPTH_32F, 1 );
+	printf("textDetection time2\n");
+ 
+    cvSobel(gaussianImage, gradientX , 1, 0, CV_SCHARR);
+    cvSobel(gaussianImage, gradientY , 0, 1, CV_SCHARR);
+    cvSmooth(gradientX, gradientX, 3, 3);
+    cvSmooth(gradientY, gradientY, 3, 3);
+    cvReleaseImage ( &gaussianImage );
+    cvReleaseImage ( &grayImage );
+	printf("textDetection time3\n");
+
+    std::vector<Ray> rays;
+    IplImage * SWTImage =
+            cvCreateImage ( cvGetSize ( input ), IPL_DEPTH_32F, 1 );
+    for( int row = 0; row < input->height; row++ ){
+        float* ptr = (float*)(SWTImage->imageData + row * SWTImage->widthStep);
+        for ( int col = 0; col < input->width; col++ ){
+            *ptr++ = -1;
+        }
+    }
+    strokeWidthTransform ( edgeImage, gradientX, gradientY, dark_on_light, SWTImage, rays );
+    SWTMedianFilter ( SWTImage, rays );
+	printf("textDetection time4\n");
+
+    IplImage * output2 =
+            cvCreateImage ( cvGetSize ( input ), IPL_DEPTH_32F, 1 );
+    normalizeImage (SWTImage, output2);
+    IplImage * saveSWT =
+            cvCreateImage ( cvGetSize ( input ), IPL_DEPTH_8U, 1 );
+    cvConvertScale(output2, saveSWT, 255, 0);
+    cvReleaseImage ( &output2 );
+    cvReleaseImage( &saveSWT );
+	printf("textDetection time5\n");
+
+    std::vector<std::vector<Point2d> > components = findLegallyConnectedComponents(SWTImage, rays);
+    printf("textDetection time6\n");
+
+
+    // Filter the components
+    std::vector<Point2dFloat> compCenters;
+    std::vector<float> compMedians;
+    std::vector<Point2d> compDimensions;
+    filterComponents(SWTImage, components, validComponents, compCenters, compMedians, compDimensions, compBB );
+
+    std::cout << "!!!getComponents2 " <<compBB.size() << std::endl;
+    cvReleaseImage ( &gradientX );
+    cvReleaseImage ( &gradientY );
+    cvReleaseImage ( &SWTImage );
+    cvReleaseImage ( &edgeImage );
+}
+
+IplImage * textDetection (IplImage* input, bool dark_on_light)
+{
+
+    struct timeval start, end;
+    long mtime, seconds, useconds;
+
+    assert ( input->depth == IPL_DEPTH_8U );
+    assert ( input->nChannels == 3 );
+    //std::cout << "Running textDetection with dark_on_light " << dark_on_light << std::endl;
+
+    gettimeofday(&start, NULL);
     // Convert to grayscale
     IplImage * grayImage =
-            cvCreateImage ( cvGetSize ( input ), IPL_DEPTH_8U, 1 );
+            cvCreateImage( cvGetSize ( input ), IPL_DEPTH_8U, 1 );
     cvCvtColor ( input, grayImage, CV_RGB2GRAY );
-    std::cout << "create grayImage completed" << std::endl;
 
     // Create Canny Image
     double threshold_low = 175;
     double threshold_high = 320;
     IplImage * edgeImage =
             cvCreateImage( cvGetSize (input),IPL_DEPTH_8U, 1 );
-    std::cout << "create edgeImage completed" << std::endl;
     cvCanny(grayImage, edgeImage, threshold_low, threshold_high, 3) ;
-    std::cout << "cvCanny completed" << std::endl;
-    cvShowImage("Canny", edgeImage);
-    cvWaitKey(0);
-    std::cout << "show edgeImage completed" << std::endl;
-    cvSaveImage("canny.jpg", edgeImage);
-    std::cout << "save edgeImage completed" << std::endl;
 
     // Create gradient X, gradient Y
     IplImage * gaussianImage =
             cvCreateImage ( cvGetSize(input), IPL_DEPTH_32F, 1);
-    std::cout << "create gaussianImage completed" << std::endl;
     cvConvertScale (grayImage, gaussianImage, 1./255., 0);
-    std::cout << "cvConvertScale completed" << std::endl;
     cvSmooth( gaussianImage, gaussianImage, CV_GAUSSIAN, 5, 5);
-    std::cout << "cvSmooth completed" << std::endl;
+
     IplImage * gradientX =
             cvCreateImage ( cvGetSize ( input ), IPL_DEPTH_32F, 1 );
-    std::cout << "create gradientX completed" << std::endl;
+
     IplImage * gradientY =
             cvCreateImage ( cvGetSize ( input ), IPL_DEPTH_32F, 1 );
-    std::cout << "create gradientY completed" << std::endl;
+ 
     cvSobel(gaussianImage, gradientX , 1, 0, CV_SCHARR);
-    std::cout << "cvSobel for gradientX completed" << std::endl;
     cvSobel(gaussianImage, gradientY , 0, 1, CV_SCHARR);
-    std::cout << "cvSobel for gradientY completed" << std::endl;
     cvSmooth(gradientX, gradientX, 3, 3);
-    std::cout << "cvSmooth for gradientX completed" << std::endl;
     cvSmooth(gradientY, gradientY, 3, 3);
-    std::cout << "cvSmooth for gradientY completed" << std::endl;
     cvReleaseImage ( &gaussianImage );
-    std::cout << "cvReleaseImage gaussianImage completed" << std::endl;
     cvReleaseImage ( &grayImage );
-    std::cout << "cvReleaseImage grayImage completed" << std::endl;
+
+    gettimeofday(&end, NULL);
+    seconds  = end.tv_sec  - start.tv_sec;
+    useconds = end.tv_usec - start.tv_usec;
+
+    mtime = ((seconds) * 1000 + useconds/1000.0) + 0.5;
+    printf("Grayscale + Canny + Sobel + Smooth time : %ld ms\n", mtime);
+
+
+    gettimeofday(&start, NULL);
 
     // Calculate SWT and return ray vectors
     std::vector<Ray> rays;
@@ -330,14 +536,32 @@ IplImage * textDetection (IplImage* input, bool dark_on_light)
     IplImage * saveSWT =
             cvCreateImage ( cvGetSize ( input ), IPL_DEPTH_8U, 1 );
     cvConvertScale(output2, saveSWT, 255, 0);
-    cvSaveImage ( "SWT.png", saveSWT);
     cvReleaseImage ( &output2 );
     cvReleaseImage( &saveSWT );
+
+    gettimeofday(&end, NULL);
+    seconds  = end.tv_sec  - start.tv_sec;
+    useconds = end.tv_usec - start.tv_usec;
+
+    mtime = ((seconds) * 1000 + useconds/1000.0) + 0.5;
+    printf("SWT + normalizeImage + ConvertScale time : %ld ms\n", mtime);
 
     // Calculate legally connect components from SWT and gradient image.
     // return type is a vector of vectors, where each outer vector is a component and
     // the inner vector contains the (y,x) of each pixel in that component.
+
+    gettimeofday(&start, NULL);
+
     std::vector<std::vector<Point2d> > components = findLegallyConnectedComponents(SWTImage, rays);
+
+    gettimeofday(&end, NULL);
+    seconds  = end.tv_sec  - start.tv_sec;
+    useconds = end.tv_usec - start.tv_usec;
+
+    mtime = ((seconds) * 1000 + useconds/1000.0) + 0.5;
+    printf("Calculate legally connect components from SWT and gradient image time : %ld ms\n", mtime);
+
+    gettimeofday(&start, NULL);
 
     // Filter the components
     std::vector<std::vector<Point2d> > validComponents;
@@ -347,11 +571,31 @@ IplImage * textDetection (IplImage* input, bool dark_on_light)
     std::vector<Point2d> compDimensions;
     filterComponents(SWTImage, components, validComponents, compCenters, compMedians, compDimensions, compBB );
 
-    IplImage * output3 =
+    gettimeofday(&end, NULL);
+    seconds  = end.tv_sec  - start.tv_sec;
+    useconds = end.tv_usec - start.tv_usec;
+
+    mtime = ((seconds) * 1000 + useconds/1000.0) + 0.5;
+    printf("Filter the components time : %ld ms\n", mtime);
+
+    gettimeofday(&start, NULL);
+
+
+    /*IplImage * output3 =
             cvCreateImage ( cvGetSize ( input ), 8U, 3 );
     renderComponentsWithBoxes (SWTImage, validComponents, compBB, output3);
-    cvSaveImage ( "components.png",output3);
+    //cvSaveImage ( "components.png",output3);
     //cvReleaseImage ( &output3 );
+
+    gettimeofday(&end, NULL);
+    seconds  = end.tv_sec  - start.tv_sec;
+    useconds = end.tv_usec - start.tv_usec;
+
+    mtime = ((seconds) * 1000 + useconds/1000.0) + 0.5;
+    printf("renderComponentsWithBoxes time : %ld ms\n", mtime);*/
+
+    gettimeofday(&start, NULL);
+
 
     // Make chains of components
     std::vector<Chain> chains;
@@ -360,11 +604,20 @@ IplImage * textDetection (IplImage* input, bool dark_on_light)
     IplImage * output4 =
             cvCreateImage ( cvGetSize ( input ), IPL_DEPTH_8U, 1 );
     renderChains ( SWTImage, validComponents, chains, output4 );
-    //cvSaveImage ( "text.png", output4);
+
+    mtime = ((seconds) * 1000 + useconds/1000.0) + 0.5;
+    printf("Make chains of components time : %ld ms\n", mtime);
+
+    gettimeofday(&start, NULL);
+
 
     IplImage * output5 =
             cvCreateImage ( cvGetSize ( input ), IPL_DEPTH_8U, 3 );
     cvCvtColor (output4, output5, CV_GRAY2RGB);
+
+    mtime = ((seconds) * 1000 + useconds/1000.0) + 0.5;
+    printf("CvtColor time : %ld ms\n", mtime);
+
     cvReleaseImage ( &output4 );
 
     
@@ -548,7 +801,7 @@ findLegallyConnectedComponents (IplImage * SWTImage,
 
         std::vector<std::vector<Point2d> > components;
         components.reserve(num_comp);
-        std::cout << "Before filtering, " << num_comp << " components and " << num_vertices << " vertices" << std::endl;
+        //std::cout << "Before filtering, " << num_comp << " components and " << num_vertices << " vertices" << std::endl;
         for (int j = 0; j < num_comp; j++) {
             std::vector<Point2d> tmp;
             components.push_back( tmp );
@@ -614,7 +867,7 @@ findLegallyConnectedComponentsRAY (IplImage * SWTImage,
 
         std::vector<std::vector<Point2d> > components;
         components.reserve(num_comp);
-        std::cout << "Before filtering, " << num_comp << " components and " << num_vertices << " vertices" << std::endl;
+        //std::cout << "Before filtering, " << num_comp << " components and " << num_vertices << " vertices" << std::endl;
         for (int j = 0; j < num_comp; j++) {
             std::vector<Point2d> tmp;
             components.push_back( tmp );
@@ -803,19 +1056,21 @@ void filterComponents(IplImage * SWTImage,
                 tempBB.push_back(compBB[i]);
             }
         }
-        validComponents = tempComp;
-        compDimensions = tempDim;
-        compMedians = tempMed;
-        compCenters = tempCenters;
-        compBB = tempBB;
-
         compDimensions.reserve(tempComp.size());
         compMedians.reserve(tempComp.size());
         compCenters.reserve(tempComp.size());
         validComponents.reserve(tempComp.size());
         compBB.reserve(tempComp.size());
 
-        std::cout << "After filtering " << validComponents.size() << " components" << std::endl;
+        validComponents = tempComp;
+        compDimensions = tempDim;
+        compMedians = tempMed;
+        compCenters = tempCenters;
+        compBB = tempBB;
+
+
+
+        //std::cout << "After filtering " << validComponents.size() << " components" << std::endl;
 }
 
 bool sharesOneEnd( Chain c0, Chain c1) {
@@ -911,7 +1166,7 @@ std::vector<Chain> makeChains( IplImage * colorImage,
             }
         }
     }
-    std::cout << chains.size() << " eligible pairs" << std::endl;
+    //std::cout << chains.size() << " eligible pairs" << std::endl;
     std::sort(chains.begin(), chains.end(), &chainSortDist);
 
     std::cerr << std::endl;
@@ -1114,6 +1369,6 @@ std::vector<Chain> makeChains( IplImage * colorImage,
         }
     }
     chains = newchains;
-    std::cout << chains.size() << " chains after merging" << std::endl;
+    //std::cout << chains.size() << " chains after merging" << std::endl;
     return chains;
 }

@@ -53,6 +53,10 @@ void strokeWidthTransform (IplImage * edgeImage,
 
 void SWTMedianFilter (IplImage * SWTImage,
                      std::vector<Ray> & rays);
+int getComp(IplImage *in, CvRect** regions);
+int getFastComp(IplImage *in, CvRect** regions);
+CvRect getRegion(CvRect* in, int len, CvRect** out );
+
 
 std::vector< std::vector<Point2d> >
 findLegallyConnectedComponents (IplImage * SWTImage,
@@ -66,6 +70,10 @@ void componentStats(IplImage * SWTImage,
                                         const std::vector<Point2d> & component,
                                         float & mean, float & variance, float & median,
                                         int & minx, int & miny, int & maxx, int & maxy);
+void getComponents(	IplImage* input, 
+			std::vector<std::pair<Point2d,Point2d> > compBB, 
+			std::vector<std::vector<Point2d> > validComponents, 
+			bool dark_on_light);
 
 void filterComponents(IplImage * SWTImage,
                       std::vector<std::vector<Point2d> > & components,
