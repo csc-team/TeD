@@ -6,22 +6,12 @@ LIBRARIES       := `pkg-config opencv --cflags --libs`
 .PHONY: all clean
 	
 
-all: test test2 treck laplace treck12 show
 
-show:	showimage.cpp TextDetection.h TextDetection.cpp
-	$(CC) -g $(CFLAGS) -o show showimage.cpp TextDetection.cpp $(LIBRARIES)
-
-treck12:treck12.cpp TextDetection.h TextDetection.cpp
-	$(CC) -g $(CFLAGS) -o treck12 treck12.cpp TextDetection.cpp $(LIBRARIES)
-
-test2: test2.cpp
-	$(CC) $(CFLAGS) -o test2 test2.cpp $(LIBRARIES)
-	
-treck: treck.cpp
-	$(CC) $(CFLAGS) -g -o treck treck.cpp $(LIBRARIES)
-test: test.cpp 
-	$(CC) $(CFLAGS) -o test test.cpp $(LIBRARIES)
-laplace: laplace.cpp
-	$(CC) $(CFLAGS) -o laplace laplace.cpp $(LIBRARIES)
+main:	tracker.o TextDetection.o
+	$(CC)  $(CFLAGS) -o main tracker.o TextDetection.o $(LIBRARIES)
+tracker.o:	tracker.cpp TextDetection.h
+	$(CC) -c $(CFLAGS) -o tracker.o tracker.cpp  $(LIBRARIES)
+TextDetection.o:	TextDetection.cpp TextDetection.h
+	$(CC) -c $(CFLAGS) -o TextDetection.o TextDetection.cpp $(LIBRARIES)
 clean:
 	rm -f *.o treck *~
