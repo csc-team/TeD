@@ -13,7 +13,9 @@ IplImage *image = 0, *grey = 0, *prev_grey = 0, *pyramid = 0, *prev_pyramid = 0,
 int win_size = 10;
 const int MAX_COUNT = 500;
 const int SCALE = 10;
-CvPoint2D32f* points[2] = { 0, 0 }, *swap_points;
+CvPoint2D32f* points[2] = { 0, 0 };
+CvPoint2D32f* swap_points;
+
 char* status = 0;
 int count = 0;
 int need_to_init = 0;
@@ -53,13 +55,14 @@ int main(int argc, char** argv) {
 	CvCapture* capture = 0;
 //Получаем видеопоток с камеры или видеофайла, в зависимости от входныхпараметров
 	if (argc == 1 || (argc == 2 && strlen(argv[1]) == 1 && isdigit(argv[1][0])))
-		capture = cvCaptureFromCAM(argc == 2 ? argv[1][0] - '0' : 0);
+		capture = cvCaptureFromCAM(argc == 2 ? argv[1][0] - '0' : 1);
 	else if (argc == 2)
 		capture = cvCaptureFromAVI(argv[1]);
 	if (!capture) {
 		fprintf(stderr, "Could not initialize capturing...\n");
 		return -1;
 	}
+	
 //Печатается приветствие и краткий хелп по программе
 	printf("Welcome to lkdemo, using OpenCV version %s (%d.%d.%d)\n",
 			CV_VERSION, CV_MAJOR_VERSION, CV_MINOR_VERSION,
@@ -98,6 +101,7 @@ int main(int argc, char** argv) {
 			 поэтому это всего навсего инициализация.
 			 */
 			image = cvCreateImage(cvGetSize(frame), 8, 3);
+			printf("%d   %d", frame -> depth, image -> depth);
 			image -> origin = frame -> origin;
 			grey = cvCreateImage(cvGetSize(frame), 8, 1);
 			prev_grey = cvCreateImage(cvGetSize(frame), 8, 1);
