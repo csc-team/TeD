@@ -8,11 +8,19 @@
 
 #include "TextDetection.h"
 
+#define sqr(x) ((x)*(x))
+
 IplImage *image = 0, *grey = 0, *prev_grey = 0, *pyramid = 0, *prev_pyramid = 0,
 		*swap_temp;
 int win_size = 10;
+const bool HARRIS = true;
 const int MAX_COUNT = 500;
-const int SCALE = 10;
+const int SCALE = 50;
+const int BLOCK_SIZE = 10;
+const float MAX_DIST = 30.0f;
+const double HARRIS_K = 0.025;
+const double QUALITY = 0.15;
+const double FEATURE_DISTANCE = 5;
 CvPoint2D32f* points[2] = { 0, 0 };
 CvPoint2D32f* swap_points;
 
@@ -25,6 +33,11 @@ int flags = 0;
 CvPoint pt1 = cvPoint(0, 0);
 CvPoint pt2 = cvPoint(0, 0);
 CvRect rec;
+
+float dist(CvPoint2D32f a, CvPoint2D32f b)
+{
+	return sqrt( sqr((a.x) - (b.x)) + sqr((a.y) - (b.y)) );
+}
 
 void setRect()
 {
@@ -55,7 +68,7 @@ int main(int argc, char** argv) {
 	CvCapture* capture = 0;
 //Получаем видеопоток с камеры или видеофайла, в зависимости от входныхпараметров
 	if (argc == 1 || (argc == 2 && strlen(argv[1]) == 1 && isdigit(argv[1][0])))
-		capture = cvCaptureFromCAM(argc == 2 ? argv[1][0] - '0' : 1);
+		capture = cvCaptureFromCAM(argc == 2 ? argv[1][0] - '0' : 0);
 	else if (argc == 2)
 		capture = cvCaptureFromAVI(argv[1]);
 	if (!capture) {
@@ -131,19 +144,17 @@ int main(int argc, char** argv) {
 			//Нажимаем r и запускаем детектор
 			IplImage* eig = cvCreateImage(cvGetSize(grey), 32, 1);
 			IplImage* temp = cvCreateImage(cvGetSize(grey), 32, 1);
-			double quality = 0.01;
-			double min_distance = 10;
 			count = MAX_COUNT;
 			
 			//Находим текст детектором
 			CvRect* rects;
 			int len = getComp(image, &rects);
 			CvRect r = getRegion(rects, len);
-			
+			r = rec;			
 			//Находим точки за которыми будем следить
 			cvSetImageROI(grey, r);
-			cvGoodFeaturesToTrack(grey, eig, temp, points[1], &count, quality,
-					min_distance, 0, 3, 0, 0.04);
+			cvGoodFeaturesToTrack(grey, eig, temp, points[1], &count, QUALITY,
+					FEATURE_DISTANCE, 0, BLOCK_SIZE, HARRIS, HARRIS_K);
 			//уточняет местоположение углов
 			cvFindCornerSubPix(grey, points[1], count,
 					cvSize(win_size, win_size), cvSize(-1, -1),
@@ -171,6 +182,8 @@ int main(int argc, char** argv) {
 			//перебираем все точки
 			for (i = k = 0; i < count; i++) {
 				if (!status[i])
+					continue;
+				if (dist(points[0][i], points[1][i]) > MAX_DIST)
 					continue;
 				points[1][k++] = points[1][i];
 				if(points[1][i].x > maxX)
@@ -214,7 +227,7 @@ int main(int argc, char** argv) {
 						num++;
 					} 
 				}
-				if (num < count * 0.7f)
+				if (num < count * 0.9f)
 				{
 					break;
 				}
@@ -245,7 +258,7 @@ int main(int argc, char** argv) {
 		CV_SWAP( points[0], points[1], swap_points);
 		need_to_init = 0;
 		cvShowImage("LkDemo", image);
-		c = cvWaitKey(100);
+		c = cvWaitKey(30);
 		if ((char) c == 27)
 			break;
 		switch ((char) c) {

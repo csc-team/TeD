@@ -8,26 +8,50 @@
 #include "TextDetection.h"
 #include "TextTracker.h"
 
+#define sqr(x) ((x)*(x))
+
+const bool HARRIS = true;
+
 const int MAX_COUNT = 500;
 const int WIN_SIZE = 10;
-const int SCALE = 10;
+const int SCALE = 50;
 const int LIMIT = 1000;
 const int MIN_POINTS_TO_TRACK = 4;
-const float AMOUNT = 0.7f;
+const int BLOCK_SIZE = 10;
+
+const float AMOUNT = 0.9f;
 const float INF = 100500.0f;
 const float ZERO = 0.0f;
+const float MAX_DIST = 30.0f;
 
- 
+const double HARRIS_K = 0.025;
+const double QUALITY = 0.15;
+const double FEATURE_DISTANCE = 5;
+
 IplImage* image = 0; 
 IplImage* grey = 0; 
 IplImage* prev_grey = 0; 
 IplImage* pyramid = 0;
 IplImage* prev_pyramid = 0; 
+IplImage* swap_image = 0;
 CvPoint2D32f* points = 0;
 CvPoint2D32f* prev_points = 0;
+CvPoint2D32f* swap_points = 0;
 char* status = 0;
 int flags = 0;
 int count = 0;
+
+/*
+ ***
+ 	Эвклидово расстояние между двумя точками типа CvPoint2D32f
+ ***
+*/
+
+inline float dist(CvPoint2D32f a, CvPoint2D32f b)
+{
+	return sqrt( sqr((a.x) - (b.x)) + sqr((a.y) - (b.y)) );
+}
+
 /*
  ***
  	Выделение необходимых ресурсов. Нужно вызвать перед первым запуском
@@ -41,9 +65,12 @@ void initResources(IplImage* frame)
 	prev_grey = cvCreateImage(cvGetSize(frame), 8, 1);
 	pyramid = cvCreateImage(cvGetSize(frame), 8, 1);
 	prev_pyramid = cvCreateImage(cvGetSize(frame), 8, 1);
+	swap_image = cvCreateImage(cvGetSize(frame), 8, 1);
 	points = (CvPoint2D32f*) cvAlloc(
 			MAX_COUNT * sizeof(prev_points));
 	prev_points = (CvPoint2D32f*) cvAlloc(
+			MAX_COUNT * sizeof(prev_points));
+	swap_points = (CvPoint2D32f*) cvAlloc(
 			MAX_COUNT * sizeof(prev_points));
 	status = (char*) cvAlloc(MAX_COUNT);
 };
@@ -59,8 +86,10 @@ void releaseResources()
 	cvReleaseImage(&prev_grey);	
 	cvReleaseImage(&pyramid);
 	cvReleaseImage(&prev_pyramid);
+	cvReleaseImage(&swap_image);
 	cvFree(&points);
 	cvFree(&prev_points);
+	cvFree(&swap_points);
 	cvFree(&status);
 };
 /*
@@ -92,18 +121,15 @@ CvRect TextTracking(IplImage* frame, int mode)  // если mode != 0 нужно
 		CvRect* rects;
 		int len = getComp(image, &rects);
 		r = getRegion(rects, len);
-		
 		if(r.width * r.height > LIMIT)
 		{
 			IplImage* eig = cvCreateImage(cvGetSize(grey), 32, 1);
 			IplImage* temp = cvCreateImage(cvGetSize(grey), 32, 1);
-			double quality = 0.01;
-			double min_distance = 10;
 			count = MAX_COUNT;
 			//Находим точки за которыми будем следить
 			cvSetImageROI(grey, r);
-			cvGoodFeaturesToTrack(grey, eig, temp, points, &count, quality,
-					min_distance, 0, 3, 0, 0.04);
+			cvGoodFeaturesToTrack(grey, eig, temp, points, &count, QUALITY,
+					FEATURE_DISTANCE, 0, BLOCK_SIZE, HARRIS, HARRIS_K);
 			//уточняет местоположение углов
 			cvFindCornerSubPix(grey, points, count,
 					cvSize(WIN_SIZE, WIN_SIZE), cvSize(-1, -1),
@@ -130,7 +156,13 @@ CvRect TextTracking(IplImage* frame, int mode)  // если mode != 0 нужно
 		for (i = k = 0; i < count; i++) 
 		{
 			if (!status[i])
+			{
 				continue;
+			}
+			if (dist(points[i], prev_points[i]) > MAX_DIST)
+			{
+				continue;
+			}
 			points[k++] = points[i];
 			if(points[i].x > maxX)
 			{
