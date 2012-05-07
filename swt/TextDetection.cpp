@@ -301,10 +301,10 @@ void renderChains (IplImage * SWTImage,
     cvReleaseImage ( &outTemp);
 }
 
-inline bool intersect (int a, int b, int c, int d) {
+inline int intersect (int a, int b, int c, int d) {
 	if (a > b)  std::swap (a, b);
 	if (c > d)  std::swap (c, d);
-	return std::max(a,c) <= std::min(b,d);
+	return std::min(b,d) - std::max(a,c);
 }
 
 bool addRectToArea(std::pair<std::pair<CvPoint,CvPoint>, int>  &compLines0, std::pair<CvPoint,CvPoint> &compLines1) {
@@ -313,8 +313,11 @@ bool addRectToArea(std::pair<std::pair<CvPoint,CvPoint>, int>  &compLines0, std:
 	CvPoint p01 = compLines0.first.second;
 	CvPoint p10 = compLines1.first;
 	CvPoint p11 = compLines1.second;
+
+	int intersectx = intersect (p00.y, p01.y, p10.y, p11.y);
+	int intersecty = intersect (p00.x, p01.x, p10.x, p11.x);
 	
-	if ( intersect (p00.y, p01.y, p10.y, p11.y) && intersect (p00.x, p01.x, p10.x, p11.x) ) {
+	if ( (intersectx > 0) && (intersecty > 0) && (intersectx * intersecty > 0.5 * abs(p11.x - p10.x) * abs(p11.y - p10.y)) ) {
 
 		compLines0.second ++;
 
@@ -370,11 +373,11 @@ CvRect getRegion (IplImage* input) {
     r.width = 0;
     r.height = 0;
 
-     CvScalar c = cvScalar(0, 0, 255);
+     //CvScalar c = cvScalar(0, 0, 255);
 
     for (std::list< std::pair<std::pair<CvPoint,CvPoint>, int> >::iterator it = lightCompLines.begin(); it != lightCompLines.end(); it++) {
 
-        cvRectangle(input ,cvPoint(it->first.first.x, it->first.first.y), cvPoint(it->first.second.x, it->first.second.y  ), c, 2);
+        //cvRectangle(input ,cvPoint(it->first.first.x, it->first.first.y), cvPoint(it->first.second.x, it->first.second.y  ), c, 2);
 
         if (abs((it->first.second.x - it->first.first.x) * (it->first.second.y - it->first.first.y)) > maxArea) {
             maxArea = abs((it->first.second.x - it->first.first.x) * (it->first.second.y - it->first.first.y));
@@ -388,7 +391,7 @@ CvRect getRegion (IplImage* input) {
 
     for (std::list< std::pair<std::pair<CvPoint,CvPoint>, int> >::iterator it = darkCompLines.begin(); it != darkCompLines.end(); it++) {
 
-        cvRectangle(input ,cvPoint(it->first.first.x, it->first.first.y), cvPoint(it->first.second.x, it->first.second.y  ), c, 2);
+        //cvRectangle(input ,cvPoint(it->first.first.x, it->first.first.y), cvPoint(it->first.second.x, it->first.second.y  ), c, 2);
 
         if (abs((it->first.second.x - it->first.first.x) * (it->first.second.y - it->first.first.y)) > maxArea) {
             maxArea = abs((it->first.second.x - it->first.first.x) * (it->first.second.y - it->first.first.y));
@@ -470,12 +473,12 @@ void getChains(	IplImage* input,
     std::vector<Point2d> compDimensions;
     filterComponents(SWTImage, components, validComponents, compCenters, compMedians, compDimensions, compBB );
 
-    IplImage * output3 = cvCreateImage ( cvGetSize ( input ), 8U, 3 );
+    /*IplImage * output3 = cvCreateImage ( cvGetSize ( input ), 8U, 3 );
     renderComponentsWithBoxes (SWTImage, validComponents, compBB, output3);
 
     if (dark_on_light) cvSaveImage ( "components1.png",output3);
     else cvSaveImage ( "components0.png",output3);
-    cvReleaseImage ( &output3 );
+    cvReleaseImage ( &output3 );*/
 
     std::vector< Chain > chains;
     chains = makeChains(input, validComponents, compCenters, compMedians, compDimensions, compBB);
