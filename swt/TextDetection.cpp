@@ -21,142 +21,9 @@
 #include <limits.h>
 #include <sys/time.h>
 #include "TextDetection.h"
-
+//#include "android_log.h"//todo
 
 #define PI 3.14159265
-
-int getComp(IplImage *in, CvRect** regions) {
-
-    std::vector<std::pair<Point2d,Point2d> > darkCompBB;
-    std::vector<std::pair<Point2d,Point2d> > lightCompBB;
-
-    getComponents(in, darkCompBB, 1);
-    getComponents(in, lightCompBB,  0);
-
-
-    regions = new CvRect*[darkCompBB.size() + lightCompBB.size()];
-
-    int num = 0;
-
-
-    for (std::vector<std::pair<Point2d,Point2d> >::iterator it=darkCompBB.begin(); it != darkCompBB.end(); it++ ) {
-
-        regions[num] = new CvRect();
-        regions[num]->x = it->first.x;
-        regions[num]->y = it->first.y;
-        regions[num]->width = it->second.x - it->first.x;
-        regions[num]->height = it->second.y - it->first.y;
-	//std::cout << "x " << regions[num]->x << " y " << regions[num]->y << std::endl;
-        num++;
-    }
-
-    for (std::vector<std::pair<Point2d,Point2d> >::iterator it=lightCompBB.begin(); it != lightCompBB.end(); it++ ) {
-
-        regions[num] = new CvRect();
-        regions[num]->x = it->first.x;
-        regions[num]->y = it->first.y;
-        regions[num]->width = it->second.x - it->first.x;
-        regions[num]->height = it->second.y - it->first.y;
-	//std::cout << "x " << regions[num]->x << " y " << regions[num]->y << std::endl;
-        num++;
-    }
-
-/*
-    IplImage * out =
-            cvCreateImage ( cvGetSize ( in ), 8U, 3 );
-    cvCopy( in, out, NULL );
-
-    for (int i = 0; i < darkCompBB.size(); i++) {
-        CvScalar c = cvScalar(0, 0, i);
-        cvRectangle(out,cvPoint(regions[i]->x, regions[i]->y), cvPoint(regions[i]->x + regions[i]->width, regions[i]->y + regions[i]->height ), c, 2);
-
-    }
-    for (int i = darkCompBB.size(); i < num; i++) {
-        CvScalar c = cvScalar(0, i - darkCompBB.size(), 0);
-        cvRectangle(out,cvPoint(regions[i]->x, regions[i]->y), cvPoint(regions[i]->x + regions[i]->width, regions[i]->y + regions[i]->height ), c, 2);
-
-    }
-
-    CvRect* r = getRegion(regions, num);
-
-    CvScalar c = cvScalar(255, 0, 0);
-    cvRectangle(out,cvPoint(r->x, r->y), cvPoint(r->x + r->width, r->y + r->height ), c, 2);
-
-    cvSaveImage("canny11.jpg", out);*/
-   
-    return num;
-	
-}
-int getFastComp(IplImage *in, CvRect** regions) {
-
-    std::vector<std::pair<Point2d,Point2d> > darkCompBB;
-    std::vector<std::pair<Point2d,Point2d> > lightCompBB;
-
-    getComponents(in, darkCompBB, 1);
-    getComponents(in, lightCompBB,  0);
-
-
-    regions = new CvRect*[darkCompBB.size() + lightCompBB.size()];
-
-    int num = 0;
-
-
-    for (std::vector<std::pair<Point2d,Point2d> >::iterator it=darkCompBB.begin(); it != darkCompBB.end(); it++ ) {
-
-        regions[num] = new CvRect();
-        regions[num]->x = it->first.x;
-        regions[num]->y = it->first.y;
-        regions[num]->width = it->second.x - it->first.x;
-        regions[num]->height = it->second.y - it->first.y;
-        num++;
-    }
-
-    for (std::vector<std::pair<Point2d,Point2d> >::iterator it=lightCompBB.begin(); it != lightCompBB.end(); it++ ) {
-
-        regions[num] = new CvRect();
-        regions[num]->x = it->first.x;
-        regions[num]->y = it->first.y;
-        regions[num]->width = it->second.x - it->first.x;
-        regions[num]->height = it->second.y - it->first.y;
-        num++;
-    }
-
-/*
-    IplImage * out =
-            cvCreateImage ( cvGetSize ( in ), 8U, 3 );
-    cvCopy( in, out, NULL );
-
-    for (int i = 0; i < num; i++) {
-        CvScalar c = cvScalar(0, 0, 250);
-        cvRectangle(out,cvPoint(regions[i]->x, regions[i]->y), cvPoint(regions[i]->x + regions[i]->width, regions[i]->y + regions[i]->height ), c, 2);
-
-    }
-    cvSaveImage("canny11.jpg", out);*/
-   
-    return num;
-}
-
-CvRect* getRegion(CvRect** out, int len) {
-    
-    int maxx = 0;
-    int maxy = 0;
-    int minx = INT_MAX;
-    int miny = INT_MAX;
-
-    for (int i = 0; i < len; i++ ) {
-
-        if (out[i]->x < minx) minx = out[i]->x;
-        if (out[i]->y < miny) miny = out[i]->y;
-        if (out[i]->x + out[i]->width > maxx) maxx = out[i]->x + out[i]->width;
-        if (out[i]->y + out[i]->height > maxy) maxy = out[i]->y + out[i]->height;
-    }
-    CvRect* r = new CvRect();
-    r->x = minx;
-    r->y = miny;
-    r->width = maxx - minx;
-    r->height = maxy - miny;
-    return r;
-}
 
 
 std::vector<std::pair<CvPoint,CvPoint> > findBoundingBoxes( std::vector<std::vector<Point2d> > & components,
@@ -395,8 +262,93 @@ void renderChains (IplImage * SWTImage,
 
 }
 
-void getComponents(	IplImage* input, 
-			std::vector<std::pair<Point2d,Point2d> > & compBB, 
+
+void renderChains (IplImage * SWTImage,
+                   std::vector<std::vector<Point2d> > & components,
+                   std::vector<Chain> & chains,
+                   std::vector<std::pair<Point2d,Point2d> > & compBB,
+                   std::vector<std::pair<CvPoint,CvPoint> > & bb,
+                   IplImage * output) {
+    // keep track of included components
+    std::vector<bool> included;
+    included.reserve(components.size());
+    for (unsigned int i = 0; i != components.size(); i++) {
+        included.push_back(false);
+    }
+    for (std::vector<Chain>::iterator it = chains.begin(); it != chains.end();it++) {
+        for (std::vector<int>::iterator cit = it->components.begin(); cit != it->components.end(); cit++) {
+            included[*cit] = true;
+        }
+    }
+    std::vector<std::vector<Point2d> > componentsRed;
+    for (unsigned int i = 0; i != components.size(); i++ ) {
+        if (included[i]) {
+            componentsRed.push_back(components[i]);
+        }
+    }
+    //std::cout << componentsRed.size() << " components after chaining" << std::endl;
+    IplImage * outTemp =
+            cvCreateImage ( cvGetSize ( output ), IPL_DEPTH_32F, 1 );
+    renderComponents(SWTImage,componentsRed,outTemp);
+
+    bb = findBoundingBoxes(components, chains, compBB, outTemp);
+
+    IplImage * out =
+            cvCreateImage ( cvGetSize ( output ), IPL_DEPTH_8U, 1 );
+    cvConvertScale(outTemp, out, 255, 0);
+    cvCvtColor (out, output, CV_GRAY2RGB);
+    cvReleaseImage ( &out );
+    cvReleaseImage ( &outTemp);
+}
+
+
+CvRect getRegion (IplImage* input) {
+
+   
+    std::vector<std::pair<CvPoint,CvPoint> > lightbb;
+    std::vector<std::pair<CvPoint,CvPoint> > darkbb;
+
+    getChains(input, darkbb, 1);
+    getChains(input, lightbb, 0);
+
+    int maxArea = 0;
+    CvRect r;
+    r.x = 0;
+    r.y = 0;
+    r.width = 0;
+    r.height = 0;
+
+    for (std::vector<std::pair<CvPoint,CvPoint> >::iterator it= lightbb.begin(); it != lightbb.end(); it++) {
+
+        if (abs((it->second.x - it->first.x) * (it->second.y - it->first.y)) > maxArea) {
+            maxArea = abs((it->second.x - it->first.x) * (it->second.y - it->first.y));
+	    r.x = it->first.x;
+            r.y = it->first.y;
+            r.width = abs(it->second.x - it->first.x);
+            r.height = abs(it->second.y - it->first.y);
+
+	}
+    }
+
+    for (std::vector<std::pair<CvPoint,CvPoint> >::iterator it= darkbb.begin(); it != darkbb.end(); it++) {
+
+        if (abs((it->second.x - it->first.x) * (it->second.y - it->first.y)) > maxArea) {
+            maxArea = abs((it->second.x - it->first.x) * (it->second.y - it->first.y));
+	    r.x = it->first.x;
+            r.y = it->first.y;
+            r.width = abs(it->second.x - it->first.x);
+            r.height = abs(it->second.y - it->first.y);
+
+	}
+    }
+
+    return r;
+
+
+}
+
+void getChains(	IplImage* input, 
+			std::vector<std::pair<CvPoint,CvPoint> > &bb,
 			bool dark_on_light)
 {
     assert ( input->depth == IPL_DEPTH_8U );
@@ -449,18 +401,25 @@ void getComponents(	IplImage* input,
             cvCreateImage ( cvGetSize ( input ), IPL_DEPTH_8U, 1 );
     cvConvertScale(output2, saveSWT, 255, 0);
     cvReleaseImage ( &output2 );
-    cvReleaseImage( &saveSWT );
+    cvReleaseImage ( &saveSWT );
 
     std::vector<std::vector<Point2d> > components = findLegallyConnectedComponents(SWTImage, rays);
 
-
-    // Filter the components
     std::vector<std::vector<Point2d> > validComponents;
     std::vector<Point2dFloat> compCenters;
+    std::vector<std::pair<Point2d,Point2d> > compBB;
     std::vector<float> compMedians;
     std::vector<Point2d> compDimensions;
     filterComponents(SWTImage, components, validComponents, compCenters, compMedians, compDimensions, compBB );
 
+    std::vector< Chain > chains;
+    chains = makeChains(input, validComponents, compCenters, compMedians, compDimensions, compBB);
+
+    IplImage * output3 = cvCreateImage ( cvGetSize ( input ), IPL_DEPTH_8U, 3);
+    renderChains (SWTImage, validComponents, chains, compBB, bb, output3);
+
+    cvReleaseImage ( &output3 );
+    cvReleaseImage ( &gradientX );
     cvReleaseImage ( &gradientX );
     cvReleaseImage ( &gradientY );
     cvReleaseImage ( &SWTImage );
@@ -604,8 +563,11 @@ IplImage * textDetection (IplImage* input, bool dark_on_light)
     chains = makeChains(input, validComponents, compCenters, compMedians, compDimensions, compBB);
 
     IplImage * output4 =
-            cvCreateImage ( cvGetSize ( input ), IPL_DEPTH_8U, 1 );
-    renderChains ( SWTImage, validComponents, chains, output4 );
+            cvCreateImage ( cvGetSize ( input ), 8U, 3 );
+    //renderChains ( SWTImage, validComponents, chains, output4 );
+    renderChainsWithBoxes (SWTImage, validComponents, chains, compBB, output4);
+
+
 
     mtime = ((seconds) * 1000 + useconds/1000.0) + 0.5;
     printf("Make chains of components time : %ld ms\n", mtime);
@@ -615,7 +577,9 @@ IplImage * textDetection (IplImage* input, bool dark_on_light)
 
     IplImage * output5 =
             cvCreateImage ( cvGetSize ( input ), IPL_DEPTH_8U, 3 );
-    cvCvtColor (output4, output5, CV_GRAY2RGB);
+    //cvCvtColor (output4, output5, CV_GRAY2RGB);
+
+    cvSaveImage("Chains.png", &output5);
 
     mtime = ((seconds) * 1000 + useconds/1000.0) + 0.5;
     printf("CvtColor time : %ld ms\n", mtime);
@@ -1366,7 +1330,7 @@ std::vector<Chain> makeChains( IplImage * colorImage,
     std::vector<Chain> newchains;
     newchains.reserve(chains.size());
     for (std::vector<Chain>::iterator cit = chains.begin(); cit != chains.end(); cit++) {
-        if (cit->components.size() >= 3) {
+        if (cit->components.size() >= 2) {
             newchains.push_back(*cit);
         }
     }
