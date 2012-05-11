@@ -201,6 +201,7 @@ CvRect TextTracking(IplImage* frame, int mode)  // если mode != 0 нужно
 			}				
 		}
 		count = k;
+		std::cout << min_index << std::endl;
 		state.x = origin.x + shifts[min_index].x;
 		state.y = origin.y + shifts[min_index].y;
 
