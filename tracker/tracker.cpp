@@ -2,6 +2,8 @@
 #include <cmath>
 #include <cstdlib>
 #include <ctype.h>
+#include <ctime>
+#include <iostream>
 
 #include "cv.h"
 #include "highgui.h"
@@ -20,7 +22,7 @@ const int BLOCK_SIZE = 10;
 const float MAX_DIST = 30.0f;
 const double HARRIS_K = 0.025;
 const double QUALITY = 0.15;
-const double FEATURE_DISTANCE = 5;
+const double FEATURE_DISTANCE = 10;
 CvPoint2D32f* points[2] = { 0, 0 };
 CvPoint2D32f* swap_points;
 
@@ -76,6 +78,7 @@ int main(int argc, char** argv) {
 		return -1;
 	}
 	
+	srand( time(0));
 //Печатается приветствие и краткий хелп по программе
 	printf("Welcome to lkdemo, using OpenCV version %s (%d.%d.%d)\n",
 			CV_VERSION, CV_MAJOR_VERSION, CV_MINOR_VERSION,
@@ -96,6 +99,7 @@ int main(int argc, char** argv) {
 	 закроете, например
 	 нажав
 	 ESCAPE*/
+	std::cout << cvGetCaptureProperty(capture, CV_CAP_PROP_FRAME_WIDTH) << " " << cvGetCaptureProperty(capture, CV_CAP_PROP_FRAME_HEIGHT) << std::endl;
 	for (;;) {
 		float minX = 100500.0f;
 		float minY = 100500.0f;
@@ -105,7 +109,8 @@ int main(int argc, char** argv) {
 		IplImage* frame = 0;
 		int i, k, c;
 		//Получаем фрейм из видеопотока
-		frame = cvQueryFrame(capture);
+//		frame = cvQueryFrame(capture);
+		frame = cvLoadImage("/home/stas/Downloads/pictures/center.JPG");
 		if (!frame)
 			break;
 		if (!image) {
@@ -128,6 +133,12 @@ int main(int argc, char** argv) {
 					MAX_COUNT * sizeof(points[0][0]));
 			status = (char*) cvAlloc(MAX_COUNT);
 			flags = 0;
+			std::cout << std::endl;
+			for(int j = 0; j < MAX_COUNT; j++)
+			{
+				std::cout << points[0][j].y << " ";
+			}
+			std::cout << std::endl;
 		}
 		//копирование и перевод в чёрно-белое изображение
 		cvCopy(frame, image, 0);
@@ -147,10 +158,8 @@ int main(int argc, char** argv) {
 			count = MAX_COUNT;
 			
 			//Находим текст детектором
-			CvRect* rects;
-			int len = getComp(image, &rects);
-			CvRect r = getRegion(rects, len);
-			r = rec;			
+//			CvRect r = getRegion(image);
+			CvRect r = rec;			
 			//Находим точки за которыми будем следить
 			cvSetImageROI(grey, r);
 			cvGoodFeaturesToTrack(grey, eig, temp, points[1], &count, QUALITY,
@@ -201,13 +210,23 @@ int main(int argc, char** argv) {
 				if(points[1][i].y < minY)
 				{
 					minY = points[1][i].y;
-				}				
+				}
+				int R = 0, G = 0, B = 0;
 				//Отображаем точку на экране
+				if (true)
+				{
+					R = 255;
+					G = 0;
+					B = 0;
+				}
+				cvCircle(image, cvPointFrom32f(points[1][i]), 6,
+						CV_RGB(0, 0, 0), -1, 8, 0);
 				cvCircle(image, cvPointFrom32f(points[1][i]), 3,
-						CV_RGB(0,255,0), -1, 8, 0);
+						CV_RGB(R, G, B), -1, 8, 0);
 			}
 			count = k;
-			
+			cvSaveImage("result.jpg", image);
+			cvWaitKey(0);
 			float num = count;
 			float diffX = (maxX - minX) / SCALE; 
 			float diffY = (maxY - minY) / SCALE;
@@ -236,8 +255,8 @@ int main(int argc, char** argv) {
 				curY1 += diffY;
 				curY2 -= diffY;
 			}
-			cvRectangle(image, cvPoint(static_cast<int>(std::floor(curX1)), static_cast<int>(std::floor(curY1))),
-					   cvPoint(static_cast<int>(std::floor(curX2)), static_cast<int>(std::floor(curY2))), CV_RGB(125,200,100), 1, 8, 0);
+//			cvRectangle(image, cvPoint(static_cast<int>(std::floor(curX1)), static_cast<int>(std::floor(curY1))),
+//					   cvPoint(static_cast<int>(std::floor(curX2)), static_cast<int>(std::floor(curY2))), CV_RGB(125,200,100), 1, 8, 0);
 		}
 
 		/*

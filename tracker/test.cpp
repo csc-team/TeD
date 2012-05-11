@@ -50,11 +50,14 @@ int main(int argc, char** argv)
 	cvNamedWindow("Text Detector demo", 0);
 	//Устанавливаем функцию обработчик мыши, сама функция находится выше
 	cvSetMouseCallback("Text Detector demo", on_mouse, 0);
-	for(;;)
+	char filename[10];
+	for(int f = 1 ;; f++)
 	{
 		IplImage* frame = 0;
 		//Получаем фрейм из видеопотока
 		frame = cvQueryFrame(capture);
+//		sprintf(filename, "/home/stas/Downloads/data4/%d.jpg", f);
+//		frame = cvLoadImage(filename);
 		if (!frame)
 		{
 			break;
