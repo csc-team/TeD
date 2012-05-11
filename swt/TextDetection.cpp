@@ -21,142 +21,9 @@
 #include <limits.h>
 #include <sys/time.h>
 #include "TextDetection.h"
-
+//#include "android_log.h"//todo
 
 #define PI 3.14159265
-
-int getComp(IplImage *in, CvRect** regions) {
-
-    std::vector<std::pair<Point2d,Point2d> > darkCompBB;
-    std::vector<std::pair<Point2d,Point2d> > lightCompBB;
-
-    getComponents(in, darkCompBB, 1);
-    getComponents(in, lightCompBB,  0);
-
-
-    regions = new CvRect*[darkCompBB.size() + lightCompBB.size()];
-
-    int num = 0;
-
-
-    for (std::vector<std::pair<Point2d,Point2d> >::iterator it=darkCompBB.begin(); it != darkCompBB.end(); it++ ) {
-
-        regions[num] = new CvRect();
-        regions[num]->x = it->first.x;
-        regions[num]->y = it->first.y;
-        regions[num]->width = it->second.x - it->first.x;
-        regions[num]->height = it->second.y - it->first.y;
-	//std::cout << "x " << regions[num]->x << " y " << regions[num]->y << std::endl;
-        num++;
-    }
-
-    for (std::vector<std::pair<Point2d,Point2d> >::iterator it=lightCompBB.begin(); it != lightCompBB.end(); it++ ) {
-
-        regions[num] = new CvRect();
-        regions[num]->x = it->first.x;
-        regions[num]->y = it->first.y;
-        regions[num]->width = it->second.x - it->first.x;
-        regions[num]->height = it->second.y - it->first.y;
-	//std::cout << "x " << regions[num]->x << " y " << regions[num]->y << std::endl;
-        num++;
-    }
-
-/*
-    IplImage * out =
-            cvCreateImage ( cvGetSize ( in ), 8U, 3 );
-    cvCopy( in, out, NULL );
-
-    for (int i = 0; i < darkCompBB.size(); i++) {
-        CvScalar c = cvScalar(0, 0, i);
-        cvRectangle(out,cvPoint(regions[i]->x, regions[i]->y), cvPoint(regions[i]->x + regions[i]->width, regions[i]->y + regions[i]->height ), c, 2);
-
-    }
-    for (int i = darkCompBB.size(); i < num; i++) {
-        CvScalar c = cvScalar(0, i - darkCompBB.size(), 0);
-        cvRectangle(out,cvPoint(regions[i]->x, regions[i]->y), cvPoint(regions[i]->x + regions[i]->width, regions[i]->y + regions[i]->height ), c, 2);
-
-    }
-
-    CvRect* r = getRegion(regions, num);
-
-    CvScalar c = cvScalar(255, 0, 0);
-    cvRectangle(out,cvPoint(r->x, r->y), cvPoint(r->x + r->width, r->y + r->height ), c, 2);
-
-    cvSaveImage("canny11.jpg", out);*/
-   
-    return num;
-	
-}
-int getFastComp(IplImage *in, CvRect** regions) {
-
-    std::vector<std::pair<Point2d,Point2d> > darkCompBB;
-    std::vector<std::pair<Point2d,Point2d> > lightCompBB;
-
-    getComponents(in, darkCompBB, 1);
-    getComponents(in, lightCompBB,  0);
-
-
-    regions = new CvRect*[darkCompBB.size() + lightCompBB.size()];
-
-    int num = 0;
-
-
-    for (std::vector<std::pair<Point2d,Point2d> >::iterator it=darkCompBB.begin(); it != darkCompBB.end(); it++ ) {
-
-        regions[num] = new CvRect();
-        regions[num]->x = it->first.x;
-        regions[num]->y = it->first.y;
-        regions[num]->width = it->second.x - it->first.x;
-        regions[num]->height = it->second.y - it->first.y;
-        num++;
-    }
-
-    for (std::vector<std::pair<Point2d,Point2d> >::iterator it=lightCompBB.begin(); it != lightCompBB.end(); it++ ) {
-
-        regions[num] = new CvRect();
-        regions[num]->x = it->first.x;
-        regions[num]->y = it->first.y;
-        regions[num]->width = it->second.x - it->first.x;
-        regions[num]->height = it->second.y - it->first.y;
-        num++;
-    }
-
-/*
-    IplImage * out =
-            cvCreateImage ( cvGetSize ( in ), 8U, 3 );
-    cvCopy( in, out, NULL );
-
-    for (int i = 0; i < num; i++) {
-        CvScalar c = cvScalar(0, 0, 250);
-        cvRectangle(out,cvPoint(regions[i]->x, regions[i]->y), cvPoint(regions[i]->x + regions[i]->width, regions[i]->y + regions[i]->height ), c, 2);
-
-    }
-    cvSaveImage("canny11.jpg", out);*/
-   
-    return num;
-}
-
-CvRect* getRegion(CvRect** out, int len) {
-    
-    int maxx = 0;
-    int maxy = 0;
-    int minx = INT_MAX;
-    int miny = INT_MAX;
-
-    for (int i = 0; i < len; i++ ) {
-
-        if (out[i]->x < minx) minx = out[i]->x;
-        if (out[i]->y < miny) miny = out[i]->y;
-        if (out[i]->x + out[i]->width > maxx) maxx = out[i]->x + out[i]->width;
-        if (out[i]->y + out[i]->height > maxy) maxy = out[i]->y + out[i]->height;
-    }
-    CvRect* r = new CvRect();
-    r->x = minx;
-    r->y = miny;
-    r->width = maxx - minx;
-    r->height = maxy - miny;
-    return r;
-}
 
 
 std::vector<std::pair<CvPoint,CvPoint> > findBoundingBoxes( std::vector<std::vector<Point2d> > & components,
@@ -395,8 +262,154 @@ void renderChains (IplImage * SWTImage,
 
 }
 
-void getComponents(	IplImage* input, 
-			std::vector<std::pair<Point2d,Point2d> > & compBB, 
+
+void renderChains (IplImage * SWTImage,
+                   std::vector<std::vector<Point2d> > & components,
+                   std::vector<Chain> & chains,
+                   std::vector<std::pair<Point2d,Point2d> > & compBB,
+                   std::vector<std::pair<CvPoint,CvPoint> > & bb,
+                   IplImage * output) {
+    // keep track of included components
+    std::vector<bool> included;
+    included.reserve(components.size());
+    for (unsigned int i = 0; i != components.size(); i++) {
+        included.push_back(false);
+    }
+    for (std::vector<Chain>::iterator it = chains.begin(); it != chains.end();it++) {
+        for (std::vector<int>::iterator cit = it->components.begin(); cit != it->components.end(); cit++) {
+            included[*cit] = true;
+        }
+    }
+    std::vector<std::vector<Point2d> > componentsRed;
+    for (unsigned int i = 0; i != components.size(); i++ ) {
+        if (included[i]) {
+            componentsRed.push_back(components[i]);
+        }
+    }
+    //std::cout << componentsRed.size() << " components after chaining" << std::endl;
+    IplImage * outTemp =
+            cvCreateImage ( cvGetSize ( output ), IPL_DEPTH_32F, 1 );
+    renderComponents(SWTImage,componentsRed,outTemp);
+
+    bb = findBoundingBoxes(components, chains, compBB, outTemp);
+
+    IplImage * out =
+            cvCreateImage ( cvGetSize ( output ), IPL_DEPTH_8U, 1 );
+    cvConvertScale(outTemp, out, 255, 0);
+    cvCvtColor (out, output, CV_GRAY2RGB);
+    cvReleaseImage ( &out );
+    cvReleaseImage ( &outTemp);
+}
+
+inline int intersect (int a, int b, int c, int d) {
+	if (a > b)  std::swap (a, b);
+	if (c > d)  std::swap (c, d);
+	return std::min(b,d) - std::max(a,c);
+}
+
+bool addRectToArea(std::pair<std::pair<CvPoint,CvPoint>, int>  &compLines0, std::pair<CvPoint,CvPoint> &compLines1) {
+
+	CvPoint p00 = compLines0.first.first;
+	CvPoint p01 = compLines0.first.second;
+	CvPoint p10 = compLines1.first;
+	CvPoint p11 = compLines1.second;
+
+	int intersectx = intersect (p00.y, p01.y, p10.y, p11.y);
+	int intersecty = intersect (p00.x, p01.x, p10.x, p11.x);
+	
+	if ( (intersectx > 0) && (intersecty > 0) && (intersectx * intersecty > 0.5 * abs(p11.x - p10.x) * abs(p11.y - p10.y)) ) {
+
+		compLines0.second ++;
+
+		if (p00.x > p10.x) compLines0.first.first.x = p10.x;
+		if (p00.y > p10.y) compLines0.first.first.y = p10.y;
+		if (p01.x < p11.x) compLines0.first.second.x = p11.x;
+		if (p01.y < p11.y) compLines0.first.second.y = p11.y;
+		return true;
+	}
+
+	return false;
+}
+
+
+CvRect getRegion (IplImage* input) {
+
+   
+    std::vector<std::pair<CvPoint,CvPoint> > lightbb;
+    std::vector<std::pair<CvPoint,CvPoint> > darkbb;
+
+    getChains(input, darkbb, 1);
+    getChains(input, lightbb, 0);
+
+    std::list< std::pair<std::pair<CvPoint,CvPoint>, int> > darkCompLines;
+    std::list< std::pair<std::pair<CvPoint,CvPoint>, int> > lightCompLines;
+
+    for (std::vector<std::pair<CvPoint,CvPoint> >::iterator bb = darkbb.begin(); bb != darkbb.end(); ++bb) { 
+        int k = 0;
+	for (std::list< std::pair<std::pair<CvPoint,CvPoint>, int> >::iterator it = darkCompLines.begin(); it != darkCompLines.end(); ++it) {
+		if  (addRectToArea((*it), (*bb) )) k++;
+	}
+	if (k == 0) {
+		std::pair<std::pair<CvPoint,CvPoint>, int> pair((*bb), 1);
+		darkCompLines.push_back(pair);
+	}
+   }
+
+    for (std::vector<std::pair<CvPoint,CvPoint> >::iterator bb = lightbb.begin(); bb != lightbb.end(); ++bb) { 
+        int k = 0;
+	for (std::list< std::pair<std::pair<CvPoint,CvPoint>, int> >::iterator it = lightCompLines.begin(); it != lightCompLines.end(); ++it) {
+		if  (addRectToArea((*it), (*bb) )) k++;
+	}
+	if (k == 0) {
+		std::pair<std::pair<CvPoint,CvPoint>, int> pair((*bb), 1);
+		lightCompLines.push_back(pair);
+	}
+   }
+
+    int maxArea = 0;
+    CvRect r;
+    r.x = 0;
+    r.y = 0;
+    r.width = 0;
+    r.height = 0;
+
+     //CvScalar c = cvScalar(0, 0, 255);
+
+    for (std::list< std::pair<std::pair<CvPoint,CvPoint>, int> >::iterator it = lightCompLines.begin(); it != lightCompLines.end(); it++) {
+
+        //cvRectangle(input ,cvPoint(it->first.first.x, it->first.first.y), cvPoint(it->first.second.x, it->first.second.y  ), c, 2);
+
+        if (abs((it->first.second.x - it->first.first.x) * (it->first.second.y - it->first.first.y)) > maxArea) {
+            maxArea = abs((it->first.second.x - it->first.first.x) * (it->first.second.y - it->first.first.y));
+	    r.x = it->first.first.x;
+            r.y = it->first.first.y;
+            r.width = abs(it->first.second.x - it->first.first.x);
+            r.height = abs(it->first.second.y - it->first.first.y);
+
+	}
+    }
+
+    for (std::list< std::pair<std::pair<CvPoint,CvPoint>, int> >::iterator it = darkCompLines.begin(); it != darkCompLines.end(); it++) {
+
+        //cvRectangle(input ,cvPoint(it->first.first.x, it->first.first.y), cvPoint(it->first.second.x, it->first.second.y  ), c, 2);
+
+        if (abs((it->first.second.x - it->first.first.x) * (it->first.second.y - it->first.first.y)) > maxArea) {
+            maxArea = abs((it->first.second.x - it->first.first.x) * (it->first.second.y - it->first.first.y));
+	    r.x = it->first.first.x;
+            r.y = it->first.first.y;
+            r.width = abs(it->first.second.x - it->first.first.x);
+            r.height = abs(it->first.second.y - it->first.first.y);
+
+	}
+    }
+
+    return r;
+
+
+}
+
+void getChains(	IplImage* input, 
+			std::vector<std::pair<CvPoint,CvPoint> > &bb,
 			bool dark_on_light)
 {
     assert ( input->depth == IPL_DEPTH_8U );
@@ -449,186 +462,38 @@ void getComponents(	IplImage* input,
             cvCreateImage ( cvGetSize ( input ), IPL_DEPTH_8U, 1 );
     cvConvertScale(output2, saveSWT, 255, 0);
     cvReleaseImage ( &output2 );
-    cvReleaseImage( &saveSWT );
+    cvReleaseImage ( &saveSWT );
 
     std::vector<std::vector<Point2d> > components = findLegallyConnectedComponents(SWTImage, rays);
 
-
-    // Filter the components
     std::vector<std::vector<Point2d> > validComponents;
     std::vector<Point2dFloat> compCenters;
-    std::vector<float> compMedians;
-    std::vector<Point2d> compDimensions;
-    filterComponents(SWTImage, components, validComponents, compCenters, compMedians, compDimensions, compBB );
-
-    cvReleaseImage ( &gradientX );
-    cvReleaseImage ( &gradientY );
-    cvReleaseImage ( &SWTImage );
-    cvReleaseImage ( &edgeImage );
-}
-
-IplImage * textDetection (IplImage* input, bool dark_on_light)
-{
-
-    struct timeval start, end;
-    long mtime, seconds, useconds;
-
-    assert ( input->depth == IPL_DEPTH_8U );
-    assert ( input->nChannels == 3 );
-    //std::cout << "Running textDetection with dark_on_light " << dark_on_light << std::endl;
-
-    gettimeofday(&start, NULL);
-    // Convert to grayscale
-    IplImage * grayImage =
-            cvCreateImage( cvGetSize ( input ), IPL_DEPTH_8U, 1 );
-    cvCvtColor ( input, grayImage, CV_RGB2GRAY );
-
-    // Create Canny Image
-    double threshold_low = 175;
-    double threshold_high = 320;
-    IplImage * edgeImage =
-            cvCreateImage( cvGetSize (input),IPL_DEPTH_8U, 1 );
-    cvCanny(grayImage, edgeImage, threshold_low, threshold_high, 3) ;
-
-    // Create gradient X, gradient Y
-    IplImage * gaussianImage =
-            cvCreateImage ( cvGetSize(input), IPL_DEPTH_32F, 1);
-    cvConvertScale (grayImage, gaussianImage, 1./255., 0);
-    cvSmooth( gaussianImage, gaussianImage, CV_GAUSSIAN, 5, 5);
-
-    IplImage * gradientX =
-            cvCreateImage ( cvGetSize ( input ), IPL_DEPTH_32F, 1 );
-
-    IplImage * gradientY =
-            cvCreateImage ( cvGetSize ( input ), IPL_DEPTH_32F, 1 );
- 
-    cvSobel(gaussianImage, gradientX , 1, 0, CV_SCHARR);
-    cvSobel(gaussianImage, gradientY , 0, 1, CV_SCHARR);
-    cvSmooth(gradientX, gradientX, 3, 3);
-    cvSmooth(gradientY, gradientY, 3, 3);
-    cvReleaseImage ( &gaussianImage );
-    cvReleaseImage ( &grayImage );
-
-    gettimeofday(&end, NULL);
-    seconds  = end.tv_sec  - start.tv_sec;
-    useconds = end.tv_usec - start.tv_usec;
-
-    mtime = ((seconds) * 1000 + useconds/1000.0) + 0.5;
-    printf("Grayscale + Canny + Sobel + Smooth time : %ld ms\n", mtime);
-
-
-    gettimeofday(&start, NULL);
-
-    // Calculate SWT and return ray vectors
-    std::vector<Ray> rays;
-    IplImage * SWTImage =
-            cvCreateImage ( cvGetSize ( input ), IPL_DEPTH_32F, 1 );
-    for( int row = 0; row < input->height; row++ ){
-        float* ptr = (float*)(SWTImage->imageData + row * SWTImage->widthStep);
-        for ( int col = 0; col < input->width; col++ ){
-            *ptr++ = -1;
-        }
-    }
-    strokeWidthTransform ( edgeImage, gradientX, gradientY, dark_on_light, SWTImage, rays );
-    SWTMedianFilter ( SWTImage, rays );
-
-    IplImage * output2 =
-            cvCreateImage ( cvGetSize ( input ), IPL_DEPTH_32F, 1 );
-    normalizeImage (SWTImage, output2);
-    IplImage * saveSWT =
-            cvCreateImage ( cvGetSize ( input ), IPL_DEPTH_8U, 1 );
-    cvConvertScale(output2, saveSWT, 255, 0);
-    cvReleaseImage ( &output2 );
-    cvReleaseImage( &saveSWT );
-
-    gettimeofday(&end, NULL);
-    seconds  = end.tv_sec  - start.tv_sec;
-    useconds = end.tv_usec - start.tv_usec;
-
-    mtime = ((seconds) * 1000 + useconds/1000.0) + 0.5;
-    printf("SWT + normalizeImage + ConvertScale time : %ld ms\n", mtime);
-
-    // Calculate legally connect components from SWT and gradient image.
-    // return type is a vector of vectors, where each outer vector is a component and
-    // the inner vector contains the (y,x) of each pixel in that component.
-
-    gettimeofday(&start, NULL);
-
-    std::vector<std::vector<Point2d> > components = findLegallyConnectedComponents(SWTImage, rays);
-
-    gettimeofday(&end, NULL);
-    seconds  = end.tv_sec  - start.tv_sec;
-    useconds = end.tv_usec - start.tv_usec;
-
-    mtime = ((seconds) * 1000 + useconds/1000.0) + 0.5;
-    printf("Calculate legally connect components from SWT and gradient image time : %ld ms\n", mtime);
-
-    gettimeofday(&start, NULL);
-
-    // Filter the components
-    std::vector<std::vector<Point2d> > validComponents;
     std::vector<std::pair<Point2d,Point2d> > compBB;
-    std::vector<Point2dFloat> compCenters;
     std::vector<float> compMedians;
     std::vector<Point2d> compDimensions;
     filterComponents(SWTImage, components, validComponents, compCenters, compMedians, compDimensions, compBB );
 
-    gettimeofday(&end, NULL);
-    seconds  = end.tv_sec  - start.tv_sec;
-    useconds = end.tv_usec - start.tv_usec;
-
-    mtime = ((seconds) * 1000 + useconds/1000.0) + 0.5;
-    printf("Filter the components time : %ld ms\n", mtime);
-
-    gettimeofday(&start, NULL);
-
-
-    /*IplImage * output3 =
-            cvCreateImage ( cvGetSize ( input ), 8U, 3 );
+    /*IplImage * output3 = cvCreateImage ( cvGetSize ( input ), 8U, 3 );
     renderComponentsWithBoxes (SWTImage, validComponents, compBB, output3);
-    //cvSaveImage ( "components.png",output3);
-    //cvReleaseImage ( &output3 );
 
-    gettimeofday(&end, NULL);
-    seconds  = end.tv_sec  - start.tv_sec;
-    useconds = end.tv_usec - start.tv_usec;
+    if (dark_on_light) cvSaveImage ( "components1.png",output3);
+    else cvSaveImage ( "components0.png",output3);
+    cvReleaseImage ( &output3 );*/
 
-    mtime = ((seconds) * 1000 + useconds/1000.0) + 0.5;
-    printf("renderComponentsWithBoxes time : %ld ms\n", mtime);*/
-
-    gettimeofday(&start, NULL);
-
-
-    // Make chains of components
-    std::vector<Chain> chains;
+    std::vector< Chain > chains;
     chains = makeChains(input, validComponents, compCenters, compMedians, compDimensions, compBB);
 
-    IplImage * output4 =
-            cvCreateImage ( cvGetSize ( input ), IPL_DEPTH_8U, 1 );
-    renderChains ( SWTImage, validComponents, chains, output4 );
-
-    mtime = ((seconds) * 1000 + useconds/1000.0) + 0.5;
-    printf("Make chains of components time : %ld ms\n", mtime);
-
-    gettimeofday(&start, NULL);
-
-
-    IplImage * output5 =
-            cvCreateImage ( cvGetSize ( input ), IPL_DEPTH_8U, 3 );
-    cvCvtColor (output4, output5, CV_GRAY2RGB);
-
-    mtime = ((seconds) * 1000 + useconds/1000.0) + 0.5;
-    printf("CvtColor time : %ld ms\n", mtime);
+    IplImage * output4 = cvCreateImage ( cvGetSize ( input ), IPL_DEPTH_8U, 3);
+    renderChains (SWTImage, validComponents, chains, compBB, bb, output4);
 
     cvReleaseImage ( &output4 );
-
-    
+    cvReleaseImage ( &gradientX );
     cvReleaseImage ( &gradientX );
     cvReleaseImage ( &gradientY );
     cvReleaseImage ( &SWTImage );
     cvReleaseImage ( &edgeImage );
-    return output5;
 }
+
 
 void strokeWidthTransform (IplImage * edgeImage,
                            IplImage * gradientX,
@@ -1145,10 +1010,6 @@ std::vector<Chain> makeChains( IplImage * colorImage,
                     c.dist = dist;
                     float d_x = (compCenters[i].x - compCenters[j].x);
                     float d_y = (compCenters[i].y - compCenters[j].y);
-                    /*
-                    float d_x = (compBB[i].first.x - compBB[j].second.x);
-                    float d_y = (compBB[i].second.y - compBB[j].second.y);
-                    */
                     float mag = sqrt(d_x*d_x + d_y*d_y);
                     d_x = d_x / mag;
                     d_y = d_y / mag;
@@ -1158,12 +1019,6 @@ std::vector<Chain> makeChains( IplImage * colorImage,
                     c.direction = dir;
                     chains.push_back(c);
 
-                    /*std::cerr << c.p << " " << c.q << std::endl;
-                    std::cerr << c.direction.x << " " << c.direction.y << std::endl;
-                    std::cerr << compCenters[c.p].x << " " << compCenters[c.p].y << std::endl;
-                    std::cerr << compCenters[c.q].x << " " << compCenters[c.q].y << std::endl;
-                    std::cerr << std::endl;
-                    std::cerr << colorDist << std::endl; */
                 }
             }
         }
@@ -1187,21 +1042,6 @@ std::vector<Chain> makeChains( IplImage * colorImage,
                     if (!chains[i].merged && !chains[j].merged && sharesOneEnd(chains[i],chains[j])) {
                         if (chains[i].p == chains[j].p) {
                             if (acos(chains[i].direction.x * -chains[j].direction.x + chains[i].direction.y * -chains[j].direction.y) < strictness) {
-                                  /*      if (chains[i].p == chains[i].q || chains[j].p == chains[j].q) {
-                                            std::cout << "CRAZY ERROR" << std::endl;
-                                        } else if (chains[i].p == chains[j].p && chains[i].q == chains[j].q) {
-                                            std::cout << "CRAZY ERROR" << std::endl;
-                                        } else if (chains[i].p == chains[j].q && chains[i].q == chains[j].p) {
-                                            std::cout << "CRAZY ERROR" << std::endl;
-                                        }
-                                        std::cerr << 1 <<std::endl;
-
-                                        std::cerr << chains[i].p << " " << chains[i].q << std::endl;
-                                        std::cerr << chains[j].p << " " << chains[j].q << std::endl;
-                                std::cerr << compCenters[chains[i].q].x << " " << compCenters[chains[i].q].y << std::endl;
-                                std::cerr << compCenters[chains[i].p].x << " " << compCenters[chains[i].p].y << std::endl;
-                                std::cerr << compCenters[chains[j].q].x << " " << compCenters[chains[j].q].y << std::endl;
-                                std::cerr << std::endl; */
 
                                 chains[i].p = chains[j].q;
                                 for (std::vector<int>::iterator it = chains[j].components.begin(); it != chains[j].components.end(); it++) {
@@ -1220,31 +1060,9 @@ std::vector<Chain> makeChains( IplImage * colorImage,
                                 chains[i].direction = dir;
                                 chains[j].merged = true;
                                 merges++;
-                                /*j=-1;
-                                i=0;
-                                if (i == chains.size() - 1) i=-1;
-                                std::stable_sort(chains.begin(), chains.end(), &chainSortLength);*/
                             }
                         } else if (chains[i].p == chains[j].q) {
                             if (acos(chains[i].direction.x * chains[j].direction.x + chains[i].direction.y * chains[j].direction.y) < strictness) {
-/*
-                                if (chains[i].p == chains[i].q || chains[j].p == chains[j].q) {
-                                    std::cout << "CRAZY ERROR" << std::endl;
-                                } else if (chains[i].p == chains[j].p && chains[i].q == chains[j].q) {
-                                    std::cout << "CRAZY ERROR" << std::endl;
-                                } else if (chains[i].p == chains[j].q && chains[i].q == chains[j].p) {
-                                    std::cout << "CRAZY ERROR" << std::endl;
-                                }
-                                std::cerr << 2 <<std::endl;
-
-                                std::cerr << chains[i].p << " " << chains[i].q << std::endl;
-                                std::cerr << chains[j].p << " " << chains[j].q << std::endl;
-                                std::cerr << chains[i].direction.x << " " << chains[i].direction.y << std::endl;
-                                std::cerr << chains[j].direction.x << " " << chains[j].direction.y << std::endl;
-                                std::cerr << compCenters[chains[i].q].x << " " << compCenters[chains[i].q].y << std::endl;
-                                std::cerr << compCenters[chains[i].p].x << " " << compCenters[chains[i].p].y << std::endl;
-                                std::cerr << compCenters[chains[j].p].x << " " << compCenters[chains[j].p].y << std::endl;
-                                std::cerr << std::endl; */
 
                                 chains[i].p = chains[j].p;
                                 for (std::vector<int>::iterator it = chains[j].components.begin(); it != chains[j].components.end(); it++) {
@@ -1264,29 +1082,10 @@ std::vector<Chain> makeChains( IplImage * colorImage,
                                 chains[i].direction = dir;
                                 chains[j].merged = true;
                                 merges++;
-                                /*j=-1;
-                                i=0;
-                                if (i == chains.size() - 1) i=-1;
-                                std::stable_sort(chains.begin(), chains.end(), &chainSortLength); */
                             }
                         } else if (chains[i].q == chains[j].p) {
                             if (acos(chains[i].direction.x * chains[j].direction.x + chains[i].direction.y * chains[j].direction.y) < strictness) {
-     /*                           if (chains[i].p == chains[i].q || chains[j].p == chains[j].q) {
-                                    std::cout << "CRAZY ERROR" << std::endl;
-                                } else if (chains[i].p == chains[j].p && chains[i].q == chains[j].q) {
-                                    std::cout << "CRAZY ERROR" << std::endl;
-                                } else if (chains[i].p == chains[j].q && chains[i].q == chains[j].p) {
-                                    std::cout << "CRAZY ERROR" << std::endl;
-                                }
-                                std::cerr << 3 <<std::endl;
 
-                                std::cerr << chains[i].p << " " << chains[i].q << std::endl;
-                                std::cerr << chains[j].p << " " << chains[j].q << std::endl;
-
-                                std::cerr << compCenters[chains[i].p].x << " " << compCenters[chains[i].p].y << std::endl;
-                                std::cerr << compCenters[chains[i].q].x << " " << compCenters[chains[i].q].y << std::endl;
-                                std::cerr << compCenters[chains[j].q].x << " " << compCenters[chains[j].q].y << std::endl;
-                                std::cerr << std::endl; */
                                 chains[i].q = chains[j].q;
                                 for (std::vector<int>::iterator it = chains[j].components.begin(); it != chains[j].components.end(); it++) {
                                     chains[i].components.push_back(*it);
@@ -1306,27 +1105,10 @@ std::vector<Chain> makeChains( IplImage * colorImage,
                                 chains[i].direction = dir;
                                 chains[j].merged = true;
                                 merges++;
-                                /*j=-1;
-                                i=0;
-                                if (i == chains.size() - 1) i=-1;
-                                std::stable_sort(chains.begin(), chains.end(), &chainSortLength); */
                             }
                         } else if (chains[i].q == chains[j].q) {
                             if (acos(chains[i].direction.x * -chains[j].direction.x + chains[i].direction.y * -chains[j].direction.y) < strictness) {
-                     /*           if (chains[i].p == chains[i].q || chains[j].p == chains[j].q) {
-                                    std::cout << "CRAZY ERROR" << std::endl;
-                                } else if (chains[i].p == chains[j].p && chains[i].q == chains[j].q) {
-                                    std::cout << "CRAZY ERROR" << std::endl;
-                                } else if (chains[i].p == chains[j].q && chains[i].q == chains[j].p) {
-                                    std::cout << "CRAZY ERROR" << std::endl;
-                                }
-                                std::cerr << 4 <<std::endl;
-                                std::cerr << chains[i].p << " " << chains[i].q << std::endl;
-                                std::cerr << chains[j].p << " " << chains[j].q << std::endl;
-                                std::cerr << compCenters[chains[i].p].x << " " << compCenters[chains[i].p].y << std::endl;
-                                std::cerr << compCenters[chains[i].q].x << " " << compCenters[chains[i].q].y << std::endl;
-                                std::cerr << compCenters[chains[j].p].x << " " << compCenters[chains[j].p].y << std::endl;
-                                std::cerr << std::endl; */
+
                                 chains[i].q = chains[j].p;
                                 for (std::vector<int>::iterator it = chains[j].components.begin(); it != chains[j].components.end(); it++) {
                                     chains[i].components.push_back(*it);
@@ -1344,10 +1126,6 @@ std::vector<Chain> makeChains( IplImage * colorImage,
                                 chains[i].direction = dir;
                                 chains[j].merged = true;
                                 merges++;
-                                /*j=-1;
-                                i=0;
-                                if (i == chains.size() - 1) i=-1;
-                                std::stable_sort(chains.begin(), chains.end(), &chainSortLength);*/
                             }
                         }
                     }
@@ -1366,11 +1144,10 @@ std::vector<Chain> makeChains( IplImage * colorImage,
     std::vector<Chain> newchains;
     newchains.reserve(chains.size());
     for (std::vector<Chain>::iterator cit = chains.begin(); cit != chains.end(); cit++) {
-        if (cit->components.size() >= 3) {
+        if (cit->components.size() >= 2) {
             newchains.push_back(*cit);
         }
     }
     chains = newchains;
-    //std::cout << chains.size() << " chains after merging" << std::endl;
     return chains;
 }
